@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<title>TrackPro | Community Board</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+* {
+  box-sizing: border-box;
+  font-family: 'Noto Sans Thai', sans-serif;
+}
+
+body {
+  margin: 0;
+  background: #f6f1e9;
+  color: #4a3f35;
+}
+
+header {
+  background: #e9dfd3;
+  padding: 16px 28px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #d6c8b8;
+}
+
+header h1 { margin: 0; }
+
+.header-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.header-actions a {
+  text-decoration: none;
+  background: #b0916f;
+  color: white;
+  padding: 8px 14px;
+  border-radius: 10px;
+  font-size: 14px;
+}
+
+.header-actions a:hover { background: #9e7f5f; }
+
+.container {
+  max-width: 1200px;
+  margin: auto;
+  padding: 24px;
+}
+
+.post-form {
+  background: white;
+  border-radius: 18px;
+  padding: 22px;
+  margin-bottom: 26px;
+  box-shadow: 0 10px 25px rgba(0,0,0,.08);
+}
+
+input, textarea, select {
+  width: 100%;
+  border-radius: 12px;
+  border: 1px solid #ddd;
+  padding: 12px;
+  margin-bottom: 12px;
+  font-size: 14px;
+  background: #fafafa;
+}
+
+textarea { resize: none; }
+
+button {
+  background: #b0916f;
+  color: white;
+  border: none;
+  border-radius: 12px;
+  padding: 10px 20px;
+  cursor: pointer;
+}
+
+button:hover { background: #9e7f5f; }
+button:disabled { background: #cccccc; cursor: not-allowed; }
+
+/* --- สไตล์ส่วน Preview รูปภาพ (เพิ่มใหม่) --- */
+#imagePreviewContainer {
+  display: none; /* ซ่อนไว้ก่อนจนกว่าจะมีการเลือกรูป */
+  width: 100%;
+  max-width: 300px;
+  margin: 10px 0 20px 0;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  position: relative;
+}
+
+#imagePreview {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+#removeImageBtn {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  background: rgba(255,255,255,0.7);
+  color: #a45c40;
+  border: none;
+  border-radius: 50%;
+  width: 25px;
+  height: 25px;
+  font-size: 16px;
+  line-height: 25px;
+  cursor: pointer;
+  padding: 0;
+  text-align: center;
+}
+#removeImageBtn:hover { background: rgba(255,255,255,0.9); }
+/* ------------------------------------------- */
+
+.filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 22px;
+}
+
+.board {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 22px;
+}
+
+.card {
+  background: white;
+  border-radius: 18px;
+  padding: 18px;
+  box-shadow: 0 10px 25px rgba(0,0,0,.08);
+}
+
+.tag {
+  display: inline-block;
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  color: white;
+  margin-bottom: 6px;
+}
+
+.news { background: #8d7b68; }
+.problem { background: #a45c40; }
+.suggest { background: #c28e47; }
+.event { background: #6f8f72; }
+
+.author {
+  font-size: 12px;
+  color: #7a6a58;
+  margin-bottom: 6px;
+}
+
+.card img {
+  width: 100%;
+  margin-top: 10px;
+  border-radius: 12px;
+  max-height: 400px;
+  object-fit: cover;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <h1>📌 กระดานชุมชน</h1>
+  <div class="header-actions">
+    <a href="allProject.html">📚 โครงงานนักเรียน</a>
+    <a href="index.html">← กลับหน้าหลัก</a>
+  </div>
+</header>
+
+<div class="container">
+
+<div class="post-form">
+  <h2>สร้างโพสต์ใหม่</h2>
+
+  <input id="author" type="text" placeholder="ชื่อผู้ให้ข้อมูล (ไม่บังคับ)">
+
+  <select id="category">
+    <option value="news">📰 ข่าวสารทั่วไป</option>
+    <option value="problem">⚠️ ปัญหาในชุมชน</option>
+    <option value="suggest">💡 ข้อเสนอแนะ</option>
+    <option value="event">🎉 กิจกรรมและงานชุมชน</option>
+  </select>
+
+  <textarea id="content" rows="4" placeholder="พิมพ์ข้อความของคุณ..."></textarea>
+
+  <label>แนบรูปภาพ (ไม่เกิน 5MB)</label>
+  <input type="file" id="imageInput" accept="image/*">
+
+  <div id="imagePreviewContainer">
+    <img id="imagePreview" src="" alt="ตัวอย่างรูปภาพ">
+    <button id="removeImageBtn" title="ลบรูปภาพ">×</button>
+  </div>
+  <button id="postBtn">โพสต์</button>
+</div>
+
+<div class="filter-bar">
+  <label>แสดงหมวด:</label>
+  <select id="filterCategory">
+    <option value="all">ทั้งหมด</option>
+    <option value="news">📰 ข่าวสารทั่วไป</option>
+    <option value="problem">⚠️ ปัญหาในชุมชน</option>
+    <option value="suggest">💡 ข้อเสนอแนะ</option>
+    <option value="event">🎉 กิจกรรมและงานชุมชน</option>
+  </select>
+</div>
+
+<div class="board" id="board"></div>
+
+</div>
+
+<script>
+// --- การตั้งค่า SUPABASE ---
+// (ใช้ค่าเดิมของคุณ)
+const SUPABASE_URL = 'https://klszrjhdpvsiktddzpga.supabase.co'
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtsc3pyamhkcHZzaWt0ZGR6cGdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE1MDMzODMsImV4cCI6MjA4NzA3OTM4M30.zcK4gseuAMxweSWEGWYSuUcPui0EJgOcE66XsKw6wUM'
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+
+const BUCKET_NAME = 'pics'; 
+
+const board = document.getElementById('board')
+const postBtn = document.getElementById('postBtn')
+const filterCategory = document.getElementById('filterCategory')
+const imageInput = document.getElementById('imageInput')
+const imagePreviewContainer = document.getElementById('imagePreviewContainer')
+const imagePreview = document.getElementById('imagePreview')
+const removeImageBtn = document.getElementById('removeImageBtn')
+
+const categoryNames = {
+  news: 'ข่าวสารทั่วไป',
+  problem: 'ปัญหาในชุมชน',
+  suggest: 'ข้อเสนอแนะ',
+  event: 'กิจกรรมและงานชุมชน'
+}
+
+// --- ฟังก์ชันจัดการ Preview รูปภาพ (เพิ่มใหม่) ---
+// 1. เมื่อมีการเลือกไฟล์
+imageInput.addEventListener('change', function() {
+  const file = this.files[0];
+  if (file) {
+    // ตรวจสอบขนาดไฟล์ก่อนทำ Preview
+    if (file.size > 5 * 1024 * 1024) {
+      alert('ขนาดไฟล์ใหญ่เกินไป (จำกัดไม่เกิน 5MB)');
+      this.value = ''; // ล้างค่าไฟล์ที่เลือก
+      imagePreviewContainer.style.display = 'none';
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      imagePreview.src = e.target.result; // ใส่ Source ของรูปภาพจากไฟล์ที่อ่านได้
+      imagePreviewContainer.style.display = 'block'; // แสดง Container
+    }
+    reader.readAsDataURL(file); // อ่านไฟล์ในรูปแบบ Data URL
+  } else {
+    imagePreviewContainer.style.display = 'none';
+  }
+});
+
+// 2. เมื่อกดปุ่มลบรูปภาพ Preview
+removeImageBtn.addEventListener('click', function() {
+  imageInput.value = ''; // ล้างค่าใน Input File
+  imagePreviewContainer.style.display = 'none'; // ซ่อน Container
+  imagePreview.src = ''; // ล้าง Source รูป
+});
+// --------------------------------------------------
+
+
+// ฟังก์ชันโหลดโพสต์ พร้อมแสดงวันที่และเวลา
+async function loadPosts(category = 'all') {
+  let query = sb
+    .from('community_posts')
+    .select('*')
+    .order('created_at', { ascending: false })
+
+  if (category !== 'all') {
+    query = query.eq('category', category)
+  }
+
+  const { data, error } = await query;
+  if (error) {
+    console.error("Error loading posts:", error);
+    return;
+  }
+
+  board.innerHTML = ''
+  data.forEach(post => {
+    const card = document.createElement('div')
+    card.className = 'card'
+
+    // แปลงวันที่จากฐานข้อมูลเป็นรูปแบบภาษาไทย
+    const dateOptions = { 
+      year: 'numeric', 
+      month: 'short', 
+      day: 'numeric', 
+      hour: '2-digit', 
+      minute: '2-digit' 
+    };
+    const thaiDate = new Date(post.created_at).toLocaleDateString('th-TH', dateOptions);
+
+    const tag = document.createElement('span')
+    tag.className = 'tag ' + post.category
+    tag.textContent = categoryNames[post.category]
+
+    const author = document.createElement('div')
+    author.className = 'author'
+    // เพิ่มการแสดงผลวันที่ต่อท้ายชื่อผู้โพสต์
+    author.innerHTML = `โดย: ${post.author || 'ไม่ระบุชื่อ'} <br> <small>📅 ${thaiDate} น.</small>`
+
+    const p = document.createElement('p')
+    p.textContent = post.content
+
+    card.appendChild(tag)
+    card.appendChild(author)
+    card.appendChild(p)
+
+    if (post.image_url) {
+      const img = document.createElement('img')
+      img.src = post.image_url
+      card.appendChild(img)
+    }
+
+    board.appendChild(card)
+  })
+}
+
+// เริ่มต้นโหลดโพสต์ทันที
+loadPosts()
+
+// ฟังก์ชันเมื่อกดปุ่มโพสต์
+postBtn.addEventListener('click', async () => {
+  const content = document.getElementById('content').value.trim()
+  const category = document.getElementById('category').value
+  let author = document.getElementById('author').value.trim()
+  const imageFile = imageInput.files[0] // ใช้ตัวแปร imageInput ที่ประกาศไว้ด้านบน
+
+  if (!content) {
+    alert('กรุณาพิมพ์ข้อความก่อนโพสต์')
+    return
+  }
+
+  if (!author) author = 'ไม่ระบุชื่อ'
+
+  // สถานะกำลังโหลด
+  const originalBtnText = postBtn.textContent;
+  postBtn.textContent = 'กำลังประมวลผล...';
+  postBtn.disabled = true;
+
+  let imageUrl = null
+
+  // ส่วนของการจัดการรูปภาพ
+  if (imageFile) {
+    // (เอาการตรวจสอบขนาดไฟล์ออกตรงนี้ เพราะตรวจสอบไปแล้วตอนทำ Preview)
+
+    // สร้างชื่อไฟล์แบบสุ่ม
+    const fileExt = imageFile.name.split('.').pop()
+    const fileName = `${Date.now()}-${Math.floor(Math.random() * 1000)}.${fileExt}`
+
+    console.log("กำลังอัปโหลดไปที่ Bucket:", BUCKET_NAME);
+
+    // 1. อัปโหลดรูปภาพ (เพิ่ม upsert และตรวจสอบ error)
+    const { data: uploadData, error: uploadError } = await sb
+      .storage
+      .from(BUCKET_NAME)
+      .upload(fileName, imageFile, {
+        cacheControl: '3600',
+        upsert: false
+      });
+
+    if (uploadError) {
+      console.error("Storage Error:", uploadError)
+      alert(`อัปโหลดรูปไม่สำเร็จ: ${uploadError.message}\n(ตรวจสอบสิทธิ์ RLS ใน Storage Policy อีกครั้ง)`)
+      resetButton(originalBtnText);
+      return
+    }
+
+    // 2. ดึง Public URL
+    const { data: urlData } = sb
+      .storage
+      .from(BUCKET_NAME)
+      .getPublicUrl(fileName)
+
+    imageUrl = urlData.publicUrl
+    console.log("อัปโหลดสำเร็จ! URL คือ:", imageUrl);
+  }
+
+  // 3. บันทึกข้อมูลลงตาราง community_posts
+  const { error: insertError } = await sb
+    .from('community_posts')
+    .insert([{ author, category, content, image_url: imageUrl }])
+
+  if (insertError) {
+    console.error("Database Error:", insertError)
+    alert(`บันทึกโพสต์ไม่สำเร็จ: ${insertError.message}`)
+    resetButton(originalBtnText);
+    return
+  }
+
+  // ล้างค่าฟอร์ม
+  document.getElementById('content').value = ''
+  document.getElementById('author').value = ''
+  imageInput.value = ''
+  imagePreviewContainer.style.display = 'none'; // ซ่อน Preview หลังโพสต์สำเร็จ
+  
+  alert('โพสต์สำเร็จแล้ว!')
+  resetButton(originalBtnText);
+  loadPosts(filterCategory.value)
+})
+
+function resetButton(text) {
+  postBtn.textContent = text;
+  postBtn.disabled = false;
+}
+
+filterCategory.addEventListener('change', () => {
+  loadPosts(filterCategory.value)
+})
+</script>
+
+</body>
+</html>

@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <title>TrackPro | Login</title>
+
+  <!-- Google Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;600&display=swap" rel="stylesheet">
+
+  <!-- Supabase v2 -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: 'Noto Sans Thai', sans-serif;
+    }
+
+    body {
+      margin: 0;
+      background: #f6f1e9;
+    }
+
+    header {
+      background: #e9dfd3;
+      padding: 14px 28px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    header img {
+      width: 42px;
+      height: 42px;
+      border-radius: 8px;
+    }
+
+    header h1 {
+      font-size: 22px;
+      color: #4a3f35;
+      margin: 0;
+    }
+
+    main {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: calc(100vh - 80px);
+    }
+
+    .card {
+      background: #ffffff;
+      width: 360px;
+      padding: 28px;
+      border-radius: 18px;
+      box-shadow: 0 10px 25px rgba(0,0,0,.08);
+      text-align: center;
+    }
+
+    .card h2 {
+      margin-bottom: 20px;
+      color: #4a3f35;
+    }
+
+    input {
+      width: 100%;
+      padding: 12px 14px;
+      margin-bottom: 14px;
+      border-radius: 10px;
+      border: 1px solid #ddd;
+      font-size: 15px;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      border-radius: 12px;
+      border: none;
+      font-size: 16px;
+      cursor: pointer;
+      margin-bottom: 10px;
+    }
+
+    .login {
+      background: #b0916f;
+      color: white;
+    }
+
+    .login:hover {
+      background: #9e7f5f;
+    }
+
+    .community {
+      background: #6f8fb0;
+      color: white;
+    }
+
+    .community:hover {
+      background: #5b7a99;
+    }
+
+    .guest {
+      background: #4caf50;
+      color: white;
+    }
+
+    .guest:hover {
+      background: #3e8e41;
+    }
+
+    .register {
+      margin-top: 14px;
+      font-size: 14px;
+    }
+
+    .register a {
+      color: #7a5c3e;
+      text-decoration: none;
+      font-weight: 600;
+    }
+  </style>
+</head>
+
+<body>
+
+<header>
+  <a href="https://pic.in.th/image/ChatGPT-Image-19-%E0%B8%81.%E0%B8%9E.-2569-19-43-40.8l04Zo"><img src="https://img1.pic.in.th/images/ChatGPT-Image-19-..-2569-19_43_40.png" alt="ChatGPT Image 19 ก.พ. 2569 19 43 40" border="0"></a>
+  <h1>TrackPro</h1>
+</header>
+
+<main>
+  <div class="card">
+    <h2>เข้าสู่ระบบ</h2>
+
+    <input id="email" type="email" placeholder="Email">
+    <input id="password" type="password" placeholder="Password">
+
+    <button id="loginBtn" class="login">Login</button>
+    <button id="communityBtn" class="community">เข้าสู่ระบบในฐานะชุมชน</button>
+    <button id="guestBtn" class="guest">เข้าสู่ชุมชนแบบไม่ต้องสมัคร</button>
+
+    <div class="register">
+      ยังไม่มีบัญชี? <a href="register.html">สมัครสมาชิก</a>
+    </div>
+  </div>
+</main>
+
+<script>
+  /* ===============================
+     🔑 Supabase Config
+  =============================== */
+  const SUPABASE_URL = 'https://klszrjhdpvsiktddzpga.supabase.co'
+  const SUPABASE_ANON_KEY =
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtsc3pyamhkcHZzaWt0ZGR6cGdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE1MDMzODMsImV4cCI6MjA4NzA3OTM4M30.zcK4gseuAMxweSWEGWYSuUcPui0EJgOcE66XsKw6wUM'
+
+  const sb = supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_ANON_KEY
+  )
+
+  /* ===============================
+     🔐 Login Teacher / Student
+  =============================== */
+  document.getElementById('loginBtn').addEventListener('click', login)
+
+  async function login() {
+    const email = document.getElementById('email').value.trim()
+    const password = document.getElementById('password').value.trim()
+
+    if (!email || !password) {
+      alert('กรุณากรอก Email และ Password')
+      return
+    }
+
+    const { data, error } = await sb.auth.signInWithPassword({ email, password })
+
+    if (error) {
+      alert(error.message)
+      return
+    }
+
+    const userId = data.user.id
+
+    const { data: profile, error: profileError } =
+      await sb.from('profiles').select('role').eq('id', userId).single()
+
+    if (profileError) {
+      alert('ไม่พบข้อมูล role')
+      return
+    }
+
+    if (profile.role === 'teacher') {
+      window.location.href = 'teacher.html'
+    } else if (profile.role === 'student') {
+      window.location.href = 'student.html'
+    } else {
+      alert('บัญชีนี้ไม่ใช่ครูหรือนักเรียน')
+    }
+  }
+
+  /* ===============================
+     🌍 Login Community (มีบัญชี)
+  =============================== */
+  document.getElementById('communityBtn').addEventListener('click', loginCommunity)
+
+  async function loginCommunity() {
+    const email = document.getElementById('email').value.trim()
+    const password = document.getElementById('password').value.trim()
+
+    if (!email || !password) {
+      alert('กรุณากรอก Email และ Password')
+      return
+    }
+
+    const { data, error } = await sb.auth.signInWithPassword({ email, password })
+
+    if (error) {
+      alert(error.message)
+      return
+    }
+
+    const userId = data.user.id
+
+    const { data: profile } =
+      await sb.from('profiles').select('role').eq('id', userId).single()
+
+    if (profile.role === 'community') {
+      window.location.href = 'community.html'
+    } else {
+      alert('บัญชีนี้ไม่ใช่บัญชีชุมชน')
+    }
+  }
+
+  /* ===============================
+     👤 Guest Community (ไม่ต้องสมัคร)
+  =============================== */
+  document.getElementById('guestBtn').addEventListener('click', () => {
+    localStorage.setItem('role', 'guest')
+    localStorage.setItem('guest_login', 'true')
+    window.location.href = 'community.html'
+  })
+</script>
+
+</body>
+</html>

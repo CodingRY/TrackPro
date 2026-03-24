@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <title>Teacher Dashboard | TrackED</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    * { box-sizing: border-box; font-family: 'Noto Sans Thai', sans-serif; }
+
+    body {
+      margin: 0;
+      background: #f6f1e9;
+    }
+
+    header {
+      background: #e9dfd3;
+      padding: 16px 28px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    header h1 {
+      margin: 0;
+      color: #4a3f35;
+    }
+
+    header button {
+      background: #b0916f;
+      border: none;
+      color: #fff;
+      padding: 10px 16px;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+
+    main {
+      padding: 30px;
+      max-width: 1100px;
+      margin: auto;
+    }
+
+    h2 {
+      color: #4a3f35;
+      margin-bottom: 20px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 20px;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 18px;
+      padding: 20px;
+      box-shadow: 0 8px 20px rgba(0,0,0,.08);
+    }
+
+    .tag {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 13px;
+      background: #e0d3c1;
+      margin-bottom: 8px;
+    }
+
+    .title {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+
+    .meta {
+      font-size: 14px;
+      color: #666;
+      margin-bottom: 10px;
+    }
+
+    .desc {
+      font-size: 14px;
+      margin-bottom: 14px;
+    }
+
+    .actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    .approve {
+      flex: 1;
+      background: #4caf50;
+      color: white;
+      border: none;
+      padding: 10px;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+
+    .reject {
+      flex: 1;
+      background: #e74c3c;
+      color: white;
+      border: none;
+      padding: 10px;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+
+    .empty {
+      text-align: center;
+      color: #777;
+      margin-top: 40px;
+    }
+  </style>
+</head>
+
+<body>
+
+<header>
+  <h1>👩‍🏫 ครูที่ปรึกษา</h1>
+  <button onclick="logout()">ออกจากระบบ</button>
+</header>
+
+<main>
+  <h2>โครงงานที่รอการอนุมัติ</h2>
+
+  <div id="projectGrid" class="grid"></div>
+  <div id="empty" class="empty" style="display:none;">
+    🎉 ไม่มีโครงงานที่รออนุมัติ
+  </div>
+</main>
+
+<script>
+  /* ===============================
+      Supabase Config
+  =============================== */
+  const SUPABASE_URL = 'https://klszrjhdpvsiktddzpga.supabase.co'
+  const SUPABASE_ANON_KEY =
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtsc3pyamhkcHZzaWt0ZGR6cGdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE1MDMzODMsImV4cCI6MjA4NzA3OTM4M30.zcK4gseuAMxweSWEGWYSuUcPui0EJgOcE66XsKw6wUM'
+
+  const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+
+  let teacherName = ''
+
+  /* ===============================
+      Init
+  =============================== */
+  init()
+
+  async function init() {
+    const { data: { user } } = await sb.auth.getUser()
+
+    if (!user) {
+      alert('กรุณาเข้าสู่ระบบใหม่')
+      location.href = 'index.html'
+      return
+    }
+
+    // ดึงชื่อครู
+    const { data: profile } = await sb
+      .from('profiles')
+      .select('first_name, last_name, role')
+      .eq('id', user.id)
+      .single()
+
+    if (!profile || profile.role !== 'teacher') {
+      alert('บัญชีนี้ไม่ใช่ครู')
+      location.href = 'index.html'
+      return
+    }
+
+    teacherName = `${profile.first_name} ${profile.last_name}`
+
+    loadProjects()
+  }
+
+  /* ===============================
+      Load Pending Projects
+  =============================== */
+  async function loadProjects() {
+    const { data, error } = await sb
+      .from('student_projects')
+      .select('*')
+      .eq('advisor', teacherName)
+      .eq('status', 'pending')
+      .order('created_at', { ascending: false })
+
+    if (error) {
+      alert('โหลดข้อมูลไม่สำเร็จ')
+      return
+    }
+
+    const grid = document.getElementById('projectGrid')
+    grid.innerHTML = ''
+
+    if (!data || data.length === 0) {
+      document.getElementById('empty').style.display = 'block'
+      return
+    }
+
+    data.forEach(p => {
+      const div = document.createElement('div')
+      div.className = 'card'
+
+      div.innerHTML = `
+        <div class="tag">${p.category}</div>
+        <div class="title">${p.title}</div>
+        <div class="meta">👨‍🎓 ${p.student_name} | ${p.grade}</div>
+        <div class="desc">${p.description || ''}</div>
+
+        <div class="actions">
+          <button class="approve" onclick="updateStatus(${p.id}, 'approved')">
+            อนุมัติ
+          </button>
+          <button class="reject" onclick="updateStatus(${p.id}, 'rejected')">
+            ปฏิเสธ
+          </button>
+        </div>
+      `
+
+      grid.appendChild(div)
+    })
+  }
+
+  /* ===============================
+      Update Status
+  =============================== */
+  async function updateStatus(id, status) {
+    const confirmText =
+      status === 'approved'
+        ? 'ยืนยันอนุมัติโครงงานนี้?'
+        : 'ยืนยันปฏิเสธโครงงานนี้?'
+
+    if (!confirm(confirmText)) return
+
+    const { error } = await sb
+      .from('student_projects')
+      .update({ status })
+      .eq('id', id)
+
+    if (error) {
+      alert('อัปเดตสถานะไม่สำเร็จ')
+      return
+    }
+
+    loadProjects()
+  }
+
+  /* ===============================
+      Logout
+  =============================== */
+  async function logout() {
+    await sb.auth.signOut()
+    location.href = 'index.html'
+  }
+</script>
+
+</body>
+</html>

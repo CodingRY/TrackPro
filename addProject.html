@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <title>TrackPro | เพิ่มโครงงานและสมาชิก</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;600&display=swap" rel="stylesheet">
+  
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+  <style>
+    * { box-sizing:border-box; font-family:'Noto Sans Thai',sans-serif; }
+    body { margin:0; background:#f6f1e9; color:#4a3f35; }
+    header { background:#e9dfd3; padding:16px 28px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #d6c8b8; }
+    header a { text-decoration:none; background:#b0916f; color:#fff; padding:10px 16px; border-radius:12px; transition: background 0.3s; }
+    header a:hover { background: #9a815d; }
+    .container { max-width:800px; margin:auto; padding:28px; }
+    .card { background:#fff; border-radius:20px; padding:28px; box-shadow:0 10px 25px rgba(0,0,0,.08); }
+    label { display:block; margin-top:16px; margin-bottom:6px; font-weight:600; }
+    input, select, textarea { width:100%; padding:12px; border-radius:12px; border:1px solid #ddd; outline: none; }
+    input:focus, select:focus, textarea:focus { border-color: #b0916f; }
+    button { margin-top:24px; width:100%; padding:14px; border:none; border-radius:14px; background:#6f8f72; color:#fff; font-size:16px; cursor:pointer; transition: background 0.3s; }
+    button:hover { background:#5a7a5d; }
+    button:disabled { background: #ccc; cursor: not-allowed; }
+    .member-list { margin-top: 10px; list-style: none; padding: 0; }
+    .member-item { background: #fdfaf7; padding: 10px 15px; border-radius: 10px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #eee; }
+    .remove-btn { color: #c94b3f; cursor: pointer; font-weight: bold; background: #fdeeee; padding: 4px 8px; border-radius: 6px; font-size: 12px; transition: 0.2s; }
+    .remove-btn:hover { background: #f8d7d7; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>➕ สร้างโครงงานใหม่</h1>
+  <a href="student.html">← กลับไปแผงควบคุม</a>
+</header>
+
+<div class="container">
+  <div class="card">
+    <h2 id="studentName" style="color: #6f8f72; border-bottom: 2px solid #eee; padding-bottom: 15px; margin-top: 0;">กำลังโหลดข้อมูลหัวหน้ากลุ่ม...</h2>
+
+    <label>ชื่อโครงงาน</label>
+    <input id="title" placeholder="ระบุชื่อโครงงานของคุณ">
+
+    <label>ครูที่ปรึกษา</label>
+    <select id="advisor">
+      <option value="">กำลังโหลดรายชื่อครู...</option>
+    </select>
+
+    <label>หมวดหมู่ / ประเภทโครงงาน</label>
+    <select id="category">
+      <option value="">เลือกประเภท</option>
+      <option value="เทคโนโลยี">เทคโนโลยี</option>
+      <option value="วิทยาศาสตร์">วิทยาศาสตร์</option>
+      <option value="สิ่งแวดล้อม">สิ่งแวดล้อม</option>
+      <option value="ชุมชน">ชุมชน</option>
+    </select>
+
+    <label>รายละเอียดโครงงานเบื้องต้น</label>
+    <textarea id="description" rows="4" placeholder="อธิบายเกี่ยวกับโครงงานสั้นๆ..."></textarea>
+
+    <hr style="margin:25px 0; border:0; border-top:1px solid #eee;">
+    
+    <label>👥 เพิ่มสมาชิกในกลุ่ม</label>
+    <div style="display: flex; gap: 10px; align-items: flex-start;">
+      <select id="studentSelector" style="flex: 1;">
+        <option value="">เลือกเพื่อนนักเรียน...</option>
+      </select>
+      <button onclick="addMember()" style="margin-top:0; width:auto; background:#b59a74; padding: 12px 20px;">เพิ่มเพื่อน</button>
+    </div>
+    
+    <ul id="memberListUI" class="member-list"></ul>
+
+    <button id="saveBtn" onclick="saveProject()">🚀 บันทึกโครงงานและข้อมูลสมาชิก</button>
+  </div>
+</div>
+
+<script>
+  const SUPABASE_URL = 'https://klszrjhdpvsiktddzpga.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtsc3pyamhkcHZzaWt0ZGR6cGdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE1MDMzODMsImV4cCI6MjA4NzA3OTM4M30.zcK4gseuAMxweSWEGWYSuUcPui0EJgOcE66XsKw6wUM';
+  const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  let currentUserId = '';
+  let studentFullName = '';
+  let selectedMembers = [];
+
+  async function init() {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) { window.location.href = 'index.html'; return; }
+    
+    currentUserId = session.user.id;
+
+    const { data: profile } = await sb.from('profiles').select('first_name,last_name').eq('id', currentUserId).single();
+    if(profile) {
+      studentFullName = `${profile.first_name} ${profile.last_name}`;
+      document.getElementById('studentName').textContent = `👑 หัวหน้ากลุ่ม: ${studentFullName}`;
+    }
+
+    loadTeachers();
+    loadStudents();
+  }
+
+  async function loadTeachers() {
+    const { data } = await sb.from('profiles').select('first_name,last_name').eq('role','teacher');
+    const select = document.getElementById('advisor');
+    select.innerHTML = '<option value="">เลือกครูที่ปรึกษา</option>';
+    data?.forEach(t => {
+      const name = `${t.first_name} ${t.last_name}`;
+      const opt = document.createElement('option'); opt.value = name; opt.textContent = name;
+      select.appendChild(opt);
+    });
+  }
+
+  async function loadStudents() {
+    const { data } = await sb.from('profiles').select('id,first_name,last_name').eq('role','student').neq('id', currentUserId);
+    const select = document.getElementById('studentSelector');
+    select.innerHTML = '<option value="">เลือกเพื่อนนักเรียน...</option>';
+    data?.forEach(s => {
+      const name = `${s.first_name} ${s.last_name}`;
+      const opt = document.createElement('option'); opt.value = s.id; opt.dataset.name = name; opt.textContent = name;
+      select.appendChild(opt);
+    });
+  }
+
+  function addMember() {
+    const select = document.getElementById('studentSelector');
+    const id = select.value;
+    
+    if (!id) { 
+      Swal.fire({ icon: 'warning', title: 'แจ้งเตือน', text: 'กรุณาเลือกชื่อเพื่อนก่อนกดเพิ่มครับ', confirmButtonColor: '#b59a74' });
+      return; 
+    }
+
+    const name = select.options[select.selectedIndex].dataset.name;
+    
+    if (selectedMembers.find(m => m.id === id)) { 
+      Swal.fire({ icon: 'error', title: 'รายชื่อซ้ำ', text: 'เพื่อนคนนี้ถูกเพิ่มเข้ากลุ่มไปแล้วครับ', confirmButtonColor: '#c94b3f' });
+      return; 
+    }
+
+    selectedMembers.push({ id, name });
+    renderMembers();
+    select.value = ""; 
+  }
+
+  function renderMembers() {
+    const list = document.getElementById('memberListUI');
+    list.innerHTML = selectedMembers.map((m, i) => `
+      <li class="member-item">
+        <span>👤 ${m.name}</span>
+        <span class="remove-btn" onclick="removeMember(${i})">✕ ลบออก</span>
+      </li>
+    `).join('');
+  }
+
+  function removeMember(i) { selectedMembers.splice(i, 1); renderMembers(); }
+
+  async function saveProject() {
+    const title = document.getElementById('title').value.trim();
+    const advisor = document.getElementById('advisor').value;
+    const category = document.getElementById('category').value;
+    const description = document.getElementById('description').value.trim();
+    const saveBtn = document.getElementById('saveBtn');
+
+    if (!title || !advisor || !category) { 
+      Swal.fire({ icon: 'warning', title: 'ข้อมูลไม่ครบ', text: 'กรุณากรอกข้อมูลสำคัญให้ครบถ้วนก่อนบันทึก', confirmButtonColor: '#b59a74' });
+      return; 
+    }
+
+    saveBtn.disabled = true; 
+    saveBtn.textContent = 'กำลังบันทึกข้อมูล... ⏳';
+
+    // 1. บันทึกโครงงาน
+    const { data: project, error: pError } = await sb.from('student_projects').insert([{
+      title, student_name: studentFullName, student_id: currentUserId, advisor, category, description, progress: 0
+    }]).select().single();
+
+    if (pError) { 
+      Swal.fire({ icon: 'error', title: 'บันทึกโครงงานไม่สำเร็จ', text: pError.message, confirmButtonColor: '#c94b3f' });
+      saveBtn.disabled = false; saveBtn.textContent = '🚀 บันทึกโครงงานและข้อมูลสมาชิก';
+      return; 
+    }
+
+    // 2. บันทึกสมาชิก
+    if (selectedMembers.length > 0) {
+      const membersToInsert = selectedMembers
+        .filter(m => m.id !== currentUserId) 
+        .map(m => ({
+          project_id: project.id, 
+          student_id: m.id       
+        }));
+        
+      if(membersToInsert.length > 0) {
+        const { error: mError } = await sb.from('project_member').insert(membersToInsert);
+        if (mError) {
+          Swal.fire({ icon: 'error', title: 'เพิ่มสมาชิกไม่สำเร็จ', html: `บันทึกโครงงานได้ แต่เพิ่มสมาชิกไม่สำเร็จ!<br>สาเหตุ: ${mError.message}`, confirmButtonColor: '#c94b3f' });
+          saveBtn.disabled = false; saveBtn.textContent = '🚀 บันทึกโครงงานและข้อมูลสมาชิก';
+          return; 
+        }
+      }
+    }
+
+    // เมื่อบันทึกสำเร็จทั้งหมด
+    Swal.fire({
+      icon: 'success',
+      title: 'สำเร็จ!',
+      text: 'บันทึกโครงงานและเพิ่มสมาชิกเรียบร้อยแล้ว! 🎉',
+      confirmButtonColor: '#6fa36f'
+    }).then(() => {
+      // โค้ดส่วนนี้จะทำงานเมื่อผู้ใช้กดปุ่ม "OK" บน Pop-up
+      window.location.href = 'student.html';
+    });
+  }
+
+  init();
+</script>
+
+</body>
+</html>

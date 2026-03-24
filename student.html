@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>โครงงานนักเรียน - ข้อมูลส่วนตัว</title>
+  
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+  <style>
+    body { margin: 0; font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; background: #f6efe6; color: #3b3b3b; }
+    header { background: #e9dfcf; padding: 18px 32px; display: flex; justify-content: space-between; align-items: center; }
+    header h1 { margin: 0; font-size: 22px; }
+    .nav-buttons button { margin-left: 8px; background: #7fa37c; color: white; border: none; padding: 10px 14px; border-radius: 10px; cursor: pointer; transition: background 0.3s; }
+    .nav-buttons button:hover { background: #6a8a68; }
+    main { padding: 32px; max-width: 1200px; margin: 0 auto; }
+
+    .user-profile { background: #fff; padding: 24px; border-radius: 16px; margin-bottom: 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); border-left: 6px solid #7fa37c; display: flex; align-items: center; gap: 20px; }
+    .profile-avatar { width: 60px; height: 60px; background: #c9b38c; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; color: white; }
+
+    .section-title { grid-column: 1 / -1; margin: 30px 0 15px 0; font-size: 1.4em; color: #5a4a3a; border-bottom: 2px solid #e9dfcf; padding-bottom: 5px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 24px; margin-bottom: 40px; }
+    
+    .card { background: #fffaf2; border-radius: 16px; padding: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); border-left: 6px solid #c9b38c; display: flex; flex-direction: column; transition: transform 0.3s ease, box-shadow 0.3s ease; cursor: pointer; }
+    .card:hover { transform: translateY(-8px); box-shadow: 0 15px 25px rgba(0,0,0,0.12); }
+    .card.approved { border-left-color: #6fa36f; background: #f1faf1; }
+    .card.rejected { border-left-color: #c94b3f; background: #fdeeee; }
+    
+    .badge { display: inline-block; padding: 5px 12px; font-size: 12px; border-radius: 20px; margin-bottom: 10px; width: fit-content; }
+    .badge.status { background: #b59a74; color: white; }
+    .title { font-size: 18px; font-weight: bold; margin-bottom: 10px; }
+    .info { font-size: 14px; line-height: 1.6; color: #555; flex-grow: 1; }
+
+    .action-buttons { display: flex; gap: 10px; margin-top: 15px; }
+    .edit-btn { flex: 1; padding: 10px; background: #d9a05b; color: white; border: none; border-radius: 10px; cursor: pointer; font-weight: 600; transition: 0.2s; }
+    .edit-btn:hover { background: #c88f4a; }
+    .delete-btn { flex: 1; padding: 10px; background: #c94b3f; color: white; border: none; border-radius: 10px; cursor: pointer; font-weight: 600; transition: 0.2s; }
+    .delete-btn:hover { background: #a83d33; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>📘 Student</h1>
+  <div class="nav-buttons">
+    <button onclick="location.href='addProject.html'">➕ เพิ่มโครงงาน</button>
+    <button onclick="location.href='allProject.html'">📚 โครงงานทั้งหมด</button>
+    <button onclick="location.href='community.html'">📌 กระดานชุมชน</button>
+    <button onclick="location.href='index.html'">🏠 หน้าหลัก</button>
+  </div>
+</header>
+
+<main>
+  <div id="userProfile" class="user-profile" style="display: none;">
+    <div class="profile-avatar">👤</div>
+    <div class="profile-details">
+      <h2 id="userName">กำลังโหลด...</h2>
+      <p id="userEmail"></p>
+    </div>
+  </div>
+
+  <div id="loading" style="text-align:center; padding: 50px;">กำลังโหลดข้อมูลโครงงาน...</div>
+
+  <div class="section-title">👑 โครงงานที่ฉันเป็นหัวหน้ากลุ่ม</div>
+  <div id="ownProjectGrid" class="grid"></div>
+
+  <div class="section-title">👥 โครงงานที่ฉันเป็นสมาชิกกลุ่ม</div>
+  <div id="memberProjectGrid" class="grid"></div>
+</main>
+
+<script>
+  const supabaseClient = supabase.createClient(
+    "https://klszrjhdpvsiktddzpga.supabase.co", 
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtsc3pyamhkcHZzaWt0ZGR6cGdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE1MDMzODMsImV4cCI6MjA4NzA3OTM4M30.zcK4gseuAMxweSWEGWYSuUcPui0EJgOcE66XsKw6wUM"
+  );
+
+  let currentUser = null;
+
+  init();
+
+  async function init() {
+    const { data: { user } } = await supabaseClient.auth.getUser();
+    if (!user) { location.href = "index.html"; return; }
+    currentUser = user;
+
+    await loadProfile(user);
+    await loadAllMyProjects(user.id);
+    document.getElementById("loading").style.display = "none";
+  }
+
+  async function loadProfile(user) {
+    const { data: profile } = await supabaseClient.from('profiles').select('first_name, last_name').eq('id', user.id).single();
+    if (profile) {
+      document.getElementById("userName").textContent = `สวัสดี, ${profile.first_name} ${profile.last_name}`;
+    }
+    document.getElementById("userProfile").style.display = "flex";
+    document.getElementById("userEmail").textContent = user.email;
+  }
+
+  async function loadAllMyProjects(userId) {
+    // 1. ดึงโครงงานที่เป็นหัวหน้า
+    const { data: ownData } = await supabaseClient.from("student_projects").select("*").eq("student_id", userId).order("created_at", { ascending: false });
+    const ownProjectIds = ownData ? ownData.map(p => p.id) : [];
+
+    // 2. ดึงโครงงานที่เป็นสมาชิก
+    const { data: memberData } = await supabaseClient.from("project_member").select("project_id, student_projects (*)").eq("student_id", userId);
+    const formattedMemberData = memberData ? memberData.map(m => m.student_projects).filter(p => p !== null && !ownProjectIds.includes(p.id)) : [];
+
+    // 3. รวบรวม ID โครงงานทั้งหมดเพื่อไปดึง "รายชื่อสมาชิกทั้งหมด"
+    const allProjects = [...(ownData || []), ...formattedMemberData];
+    const allProjectIds = allProjects.map(p => p.id);
+    
+    let membersMap = {};
+    
+    if (allProjectIds.length > 0) {
+      // ดึงข้อมูลสมาชิกจากตาราง project_member และ join เอาชื่อจาก profiles
+      const { data: membersInfo } = await supabaseClient
+        .from("project_member")
+        .select("project_id, profiles(first_name, last_name)")
+        .in("project_id", allProjectIds);
+        
+      if (membersInfo) {
+        membersInfo.forEach(m => {
+          if (!membersMap[m.project_id]) membersMap[m.project_id] = [];
+          if (m.profiles) {
+            membersMap[m.project_id].push(`${m.profiles.first_name} ${m.profiles.last_name}`);
+          }
+        });
+      }
+    }
+
+    // 4. แนบรายชื่อสมาชิกเข้าไปใน object ของแต่ละโครงงาน
+    if (ownData) {
+      ownData.forEach(p => p.memberNames = membersMap[p.id] || []);
+    }
+    formattedMemberData.forEach(p => p.memberNames = membersMap[p.id] || []);
+
+    // 5. เรนเดอร์ลงหน้าจอ
+    renderProjects("ownProjectGrid", ownData, true);
+    renderProjects("memberProjectGrid", formattedMemberData, false);
+  }
+
+  function renderProjects(elementId, projects, isOwner) {
+    const container = document.getElementById(elementId);
+    container.innerHTML = (projects && projects.length > 0) ? "" : `<p style="grid-column:1/-1; color:#999; text-align:center;">ไม่พบข้อมูลโครงงาน</p>`;
+
+    projects?.forEach(p => {
+      const card = document.createElement("div");
+      card.className = `card ${p.status === 'approved' ? 'approved' : p.status === 'rejected' ? 'rejected' : ''}`;
+      
+      card.onclick = (e) => {
+        if (e.target.tagName === 'BUTTON' || e.target.closest('.action-buttons')) return;
+        window.location.href = `projectDetail.html?id=${p.id}`;
+      };
+      
+      const actionBtnsHtml = isOwner ? `
+          <div class="action-buttons">
+            <button class="edit-btn" onclick="editProject(event, ${p.id})">✏️ แก้ไข</button>
+            <button class="delete-btn" onclick="deleteProject(event, ${p.id}, '${p.title}')">🗑️ ลบ</button>
+          </div>` : ``;
+
+      // นำ Array ของรายชื่อสมาชิกมาต่อกันด้วยลูกน้ำ (,)
+      const membersList = p.memberNames && p.memberNames.length > 0 ? p.memberNames.join(', ') : '-';
+
+      // เพิ่มบรรทัด สมาชิก: ${membersList} ลงไปในส่วน .info
+      card.innerHTML = `
+        <span class="badge status">${p.status === 'approved' ? '✅ อนุมัติแล้ว' : p.status === 'rejected' ? '❌ ไม่ผ่าน' : '⏳ รออนุมัติ'}</span>
+        <div class="title">${p.title}</div>
+        <div class="info">
+          <strong>หัวหน้า:</strong> ${p.student_name}<br>
+          <strong>ครูที่ปรึกษา:</strong> ${p.advisor || "-"}<br>
+          <strong>สมาชิก:</strong> ${membersList}<br>
+          <strong>ความคืบหน้า:</strong> ${p.progress || 0}%
+        </div>
+        ${actionBtnsHtml}
+      `;
+      container.appendChild(card);
+    });
+  }
+
+  function editProject(event, projectId) {
+    event.stopPropagation();
+    window.location.href = `editProject.html?id=${projectId}`;
+  }
+
+  async function deleteProject(event, projectId, projectTitle) {
+    event.stopPropagation();
+    
+    const result = await Swal.fire({
+      title: 'ยืนยันการลบ?',
+      text: `คุณต้องการลบโครงงาน "${projectTitle}" ใช่หรือไม่?`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#c94b3f',
+      cancelButtonColor: '#9a8c7d',
+      confirmButtonText: 'ใช่, ลบเลย!',
+      cancelButtonText: 'ยกเลิก'
+    });
+
+    if (!result.isConfirmed) return;
+
+    await supabaseClient.from('project_member').delete().eq('project_id', projectId);
+    const { error } = await supabaseClient.from('student_projects').delete().eq('id', projectId);
+    
+    if (error) {
+      Swal.fire('ข้อผิดพลาด!', error.message, 'error');
+    } else {
+      Swal.fire({
+        title: 'ลบสำเร็จ!',
+        text: 'โครงงานถูกลบเรียบร้อยแล้ว',
+        icon: 'success',
+        confirmButtonColor: '#7fa37c'
+      });
+      loadAllMyProjects(currentUser.id);
+    }
+  }
+</script>
+
+</body>
+</html>

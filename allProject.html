@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <title>TrackPro | โครงงานทั้งหมด</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    * { box-sizing: border-box; font-family: 'Noto Sans Thai', sans-serif; }
+    body { margin:0; background:#f6f1e9; color:#4a3f35; }
+
+    header {
+      background:#e9dfd3;
+      padding:16px 28px;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      border-bottom:1px solid #d6c8b8;
+    }
+
+    header h1 { margin:0; font-size:22px; }
+
+    header a {
+      text-decoration:none;
+      background:#6f8f72;
+      color:#fff;
+      padding:10px 16px;
+      border-radius:12px;
+      font-size:14px;
+    }
+
+    .container {
+      max-width:1100px;
+      margin:auto;
+      padding:28px;
+    }
+
+    .grid {
+      display:grid;
+      grid-template-columns:repeat(auto-fill,minmax(320px,1fr));
+      gap:20px;
+    }
+
+    .project-card {
+      background:#fff;
+      border-radius:18px;
+      padding:20px;
+      box-shadow:0 8px 20px rgba(0,0,0,.08);
+      border-left:8px solid #ccc;
+    }
+
+    /* ===== สถานะ ===== */
+    .project-card.pending {
+      background:#fffaf0;
+      border-color:#d1b27c;
+    }
+
+    .project-card.approved {
+      background:#f3faf4;
+      border-color:#6f8f72;
+    }
+
+    .project-card.rejected {
+      background:#fdecea;
+      border-color:#c0392b;
+    }
+
+    .status-badge {
+      display:inline-block;
+      font-size:12px;
+      padding:4px 10px;
+      border-radius:999px;
+      margin-bottom:8px;
+      color:#fff;
+    }
+
+    .status-pending { background:#c49a4a; }
+    .status-approved { background:#4f7c55; }
+    .status-rejected { background:#c0392b; }
+
+    .category {
+      display:inline-block;
+      background:#b0916f;
+      color:#fff;
+      padding:4px 10px;
+      border-radius:999px;
+      font-size:12px;
+      margin-bottom:8px;
+    }
+
+    .meta {
+      font-size:13px;
+      color:#7a6a58;
+      margin-bottom:4px;
+    }
+
+    .desc {
+      font-size:14px;
+      margin-top:8px;
+    }
+
+    .reject-message {
+      margin-top:10px;
+      padding:8px 12px;
+      background:#fdecea;
+      color:#c0392b;
+      border-radius:8px;
+      font-size:13px;
+      font-weight:600;
+    }
+
+    .empty {
+      text-align:center;
+      color:#777;
+      margin-top:60px;
+    }
+  </style>
+</head>
+
+<body>
+
+<header>
+  <h1>📚 โครงงานทั้งหมด</h1>
+  <a href="index.html">← กลับหน้าหลัก</a>
+</header>
+
+<div class="container">
+  <div id="projectGrid" class="grid"></div>
+  <div id="empty" class="empty" style="display:none;">
+    ยังไม่มีโครงงานในระบบ
+  </div>
+</div>
+
+<script>
+  /* ===== Supabase ===== */
+  const SUPABASE_URL = 'https://klszrjhdpvsiktddzpga.supabase.co'
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtsc3pyamhkcHZzaWt0ZGR6cGdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE1MDMzODMsImV4cCI6MjA4NzA3OTM4M30.zcK4gseuAMxweSWEGWYSuUcPui0EJgOcE66XsKw6wUM'
+  const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+
+  loadProjects()
+
+  async function loadProjects() {
+    const { data, error } = await sb
+      .from('student_projects')
+      .select('*')
+      .order('created_at', { ascending:false })
+
+    if (error) {
+      console.error(error)
+      alert('โหลดข้อมูลไม่สำเร็จ')
+      return
+    }
+
+    const grid = document.getElementById('projectGrid')
+    grid.innerHTML = ''
+
+    if (!data || data.length === 0) {
+      document.getElementById('empty').style.display = 'block'
+      return
+    }
+
+    data.forEach(p => {
+      const status = p.status ?? 'pending'
+
+      let statusText = '⏳ รอครูที่ปรึกษาอนุมัติ'
+      let rejectMessage = ''
+
+      if (status === 'approved') {
+        statusText = '✔ อนุมัติแล้ว'
+      }
+
+      if (status === 'rejected') {
+        statusText = '❌ ไม่ผ่านการอนุมัติ'
+        rejectMessage = `
+          <div class="reject-message">
+            ⚠️ ให้พบครูที่ปรึกษาโครงงาน
+          </div>
+        `
+      }
+
+      const card = document.createElement('div')
+      card.className = `project-card ${status}`
+
+      card.innerHTML = `
+        <span class="status-badge status-${status}">
+          ${statusText}
+        </span><br>
+
+        <span class="category">${p.category || '-'}</span>
+
+        <h3>${p.title}</h3>
+
+        <div class="meta">👩‍🎓 ${p.student_name || '-'}</div>
+        <div class="meta">👨‍🏫 ครูที่ปรึกษา: ${p.advisor || '-'}</div>
+
+        <div class="desc">${p.description || ''}</div>
+
+        ${rejectMessage}
+      `
+
+      grid.appendChild(card)
+    })
+  }
+</script>
+
+</body>
+</html>

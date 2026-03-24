@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <title>TrackPro | แก้ไขโครงงาน</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;600&display=swap" rel="stylesheet">
+  
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+  <style>
+    * { box-sizing:border-box; font-family:'Noto Sans Thai',sans-serif; }
+    body { margin:0; background:#f6f1e9; color:#4a3f35; }
+    header { background:#e9dfd3; padding:16px 28px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #d6c8b8; }
+    header a { text-decoration:none; background:#b0916f; color:#fff; padding:10px 16px; border-radius:12px; transition: background 0.3s; }
+    header a:hover { background: #9a815d; }
+    .container { max-width:800px; margin:auto; padding:28px; }
+    .card { background:#fff; border-radius:20px; padding:28px; box-shadow:0 10px 25px rgba(0,0,0,.08); }
+    label { display:block; margin-top:16px; margin-bottom:6px; font-weight:600; }
+    input, select, textarea { width:100%; padding:12px; border-radius:12px; border:1px solid #ddd; outline: none; }
+    input:focus, select:focus, textarea:focus { border-color: #b0916f; }
+    button { margin-top:24px; width:100%; padding:14px; border:none; border-radius:14px; background:#d9a05b; color:#fff; font-size:16px; cursor:pointer; transition: background 0.3s; font-weight: bold; }
+    button:hover { background:#c88f4a; }
+    button:disabled { background: #ccc; cursor: not-allowed; }
+    
+    .member-list { margin-top: 10px; list-style: none; padding: 0; }
+    .member-item { background: #fdfaf7; padding: 10px 15px; border-radius: 10px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #eee; }
+    .remove-btn { color: #c94b3f; cursor: pointer; font-weight: bold; background: #fdeeee; padding: 4px 8px; border-radius: 6px; font-size: 12px; transition: 0.2s; }
+    .remove-btn:hover { background: #f8d7d7; }
+    
+    #loadingOverlay { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.9); display:flex; justify-content:center; align-items:center; z-index: 1000; font-size: 20px; font-weight: bold; color: #5a4a3a;}
+  </style>
+</head>
+<body>
+
+<div id="loadingOverlay">กำลังโหลดข้อมูลโครงงาน... ⏳</div>
+
+<header>
+  <h1>✏️ แก้ไขข้อมูลโครงงาน</h1>
+  <a href="student.html">← ยกเลิกและกลับ</a>
+</header>
+
+<div class="container">
+  <div class="card">
+    <h2 id="studentName" style="color: #d9a05b; border-bottom: 2px solid #eee; padding-bottom: 15px; margin-top: 0;">👑 หัวหน้ากลุ่ม: กำลังโหลด...</h2>
+
+    <label>ชื่อโครงงาน</label>
+    <input id="title" placeholder="ระบุชื่อโครงงานของคุณ">
+
+    <label>ครูที่ปรึกษา</label>
+    <select id="advisor">
+      <option value="">กำลังโหลดรายชื่อครู...</option>
+    </select>
+
+    <label>หมวดหมู่ / ประเภทโครงงาน</label>
+    <select id="category">
+      <option value="">เลือกประเภท</option>
+      <option value="เทคโนโลยี">เทคโนโลยี</option>
+      <option value="วิทยาศาสตร์">วิทยาศาสตร์</option>
+      <option value="สิ่งแวดล้อม">สิ่งแวดล้อม</option>
+      <option value="ชุมชน">ชุมชน</option>
+    </select>
+
+    <label>รายละเอียดโครงงานเบื้องต้น</label>
+    <textarea id="description" rows="4" placeholder="อธิบายเกี่ยวกับโครงงานสั้นๆ..."></textarea>
+
+    <hr style="margin:25px 0; border:0; border-top:1px solid #eee;">
+    
+    <label>👥 จัดการสมาชิกในกลุ่ม</label>
+    <div style="display: flex; gap: 10px; align-items: flex-start;">
+      <select id="studentSelector" style="flex: 1;">
+        <option value="">เลือกเพื่อนนักเรียนที่ต้องการเพิ่ม...</option>
+      </select>
+      <button onclick="addMember()" style="margin-top:0; width:auto; background:#b59a74; padding: 12px 20px;">เพิ่มเพื่อน</button>
+    </div>
+    
+    <ul id="memberListUI" class="member-list"></ul>
+
+    <button id="saveBtn" onclick="updateProject()">💾 บันทึกการแก้ไข</button>
+  </div>
+</div>
+
+<script>
+  const SUPABASE_URL = 'https://klszrjhdpvsiktddzpga.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtsc3pyamhkcHZzaWt0ZGR6cGdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE1MDMzODMsImV4cCI6MjA4NzA3OTM4M30.zcK4gseuAMxweSWEGWYSuUcPui0EJgOcE66XsKw6wUM';
+  const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  let currentUserId = '';
+  let projectId = null;
+  let selectedMembers = [];
+
+  async function init() {
+    const urlParams = new URLSearchParams(window.location.search);
+    projectId = urlParams.get('id');
+
+    if (!projectId) {
+      await Swal.fire({ icon: 'error', title: 'ข้อผิดพลาด', text: 'ไม่พบรหัสโครงงานที่ต้องการแก้ไข', confirmButtonColor: '#c94b3f' });
+      window.location.href = "student.html";
+      return;
+    }
+
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) { window.location.href = 'index.html'; return; }
+    
+    currentUserId = session.user.id;
+
+    await loadTeachers();
+    await loadStudents();
+    await loadProjectData();
+  }
+
+  async function loadTeachers() {
+    const { data } = await sb.from('profiles').select('first_name,last_name').eq('role','teacher');
+    const select = document.getElementById('advisor');
+    select.innerHTML = '<option value="">เลือกครูที่ปรึกษา</option>';
+    data?.forEach(t => {
+      const name = `${t.first_name} ${t.last_name}`;
+      const opt = document.createElement('option'); opt.value = name; opt.textContent = name;
+      select.appendChild(opt);
+    });
+  }
+
+  async function loadStudents() {
+    const { data } = await sb.from('profiles').select('id,first_name,last_name').eq('role','student').neq('id', currentUserId);
+    const select = document.getElementById('studentSelector');
+    select.innerHTML = '<option value="">เลือกเพื่อนนักเรียน...</option>';
+    data?.forEach(s => {
+      const name = `${s.first_name} ${s.last_name}`;
+      const opt = document.createElement('option'); opt.value = s.id; opt.dataset.name = name; opt.textContent = name;
+      select.appendChild(opt);
+    });
+  }
+
+  async function loadProjectData() {
+    const { data: project, error: pErr } = await sb.from('student_projects').select('*').eq('id', projectId).single();
+
+    if (pErr || !project) {
+      await Swal.fire({ icon: 'error', title: 'ข้อผิดพลาด', text: 'ดึงข้อมูลโครงงานไม่สำเร็จ หรือคุณไม่มีสิทธิ์เข้าถึง', confirmButtonColor: '#c94b3f' });
+      window.location.href = "student.html";
+      return;
+    }
+
+    if (project.student_id !== currentUserId) {
+      await Swal.fire({ icon: 'warning', title: 'ปฏิเสธการเข้าถึง', text: 'คุณไม่มีสิทธิ์แก้ไขโครงงานนี้ (ต้องเป็นหัวหน้ากลุ่มเท่านั้น)', confirmButtonColor: '#d9a05b' });
+      window.location.href = "student.html";
+      return;
+    }
+
+    document.getElementById('studentName').textContent = `👑 หัวหน้ากลุ่ม: ${project.student_name}`;
+    document.getElementById('title').value = project.title;
+    document.getElementById('advisor').value = project.advisor;
+    document.getElementById('category').value = project.category;
+    document.getElementById('description').value = project.description || "";
+
+    const { data: members } = await sb.from('project_member').select('student_id, profiles(first_name, last_name)').eq('project_id', projectId);
+
+    if (members) {
+      selectedMembers = members.map(m => ({
+        id: m.student_id,
+        name: m.profiles ? `${m.profiles.first_name} ${m.profiles.last_name}` : "ไม่ทราบชื่อ"
+      }));
+      renderMembers();
+    }
+
+    document.getElementById('loadingOverlay').style.display = "none";
+  }
+
+  function addMember() {
+    const select = document.getElementById('studentSelector');
+    const id = select.value;
+    
+    if (!id) { 
+      Swal.fire({ icon: 'warning', title: 'แจ้งเตือน', text: 'กรุณาเลือกชื่อเพื่อนก่อนกดเพิ่มครับ', confirmButtonColor: '#b59a74' });
+      return; 
+    }
+    const name = select.options[select.selectedIndex].dataset.name;
+    
+    if (selectedMembers.find(m => m.id === id)) { 
+      Swal.fire({ icon: 'error', title: 'รายชื่อซ้ำ', text: 'เพื่อนคนนี้อยู่ในกลุ่มอยู่แล้วครับ', confirmButtonColor: '#c94b3f' });
+      return; 
+    }
+
+    selectedMembers.push({ id, name });
+    renderMembers();
+    select.value = ""; 
+  }
+
+  function renderMembers() {
+    const list = document.getElementById('memberListUI');
+    list.innerHTML = selectedMembers.map((m, i) => `
+      <li class="member-item">
+        <span>👤 ${m.name}</span>
+        <span class="remove-btn" onclick="removeMember(${i})">✕ ลบออก</span>
+      </li>
+    `).join('');
+  }
+
+  function removeMember(i) { selectedMembers.splice(i, 1); renderMembers(); }
+
+  async function updateProject() {
+    const title = document.getElementById('title').value.trim();
+    const advisor = document.getElementById('advisor').value;
+    const category = document.getElementById('category').value;
+    const description = document.getElementById('description').value.trim();
+    const saveBtn = document.getElementById('saveBtn');
+
+    if (!title || !advisor || !category) { 
+      Swal.fire({ icon: 'warning', title: 'ข้อมูลไม่ครบ', text: 'กรุณากรอกข้อมูลสำคัญให้ครบถ้วน', confirmButtonColor: '#d9a05b' });
+      return; 
+    }
+
+    saveBtn.disabled = true; 
+    saveBtn.textContent = 'กำลังบันทึกการแก้ไข... ⏳';
+
+    // 1. อัปเดตข้อมูลโครงงานหลัก
+    const { error: updateErr } = await sb.from('student_projects').update({ title, advisor, category, description }).eq('id', projectId);
+
+    if (updateErr) { 
+      Swal.fire({ icon: 'error', title: 'บันทึกโครงงานไม่สำเร็จ', text: updateErr.message, confirmButtonColor: '#c94b3f' });
+      saveBtn.disabled = false; saveBtn.textContent = '💾 บันทึกการแก้ไข';
+      return; 
+    }
+
+    // 2. อัปเดตสมาชิกกลุ่ม (ลบออกทั้งหมดแล้วเพิ่มใหม่)
+    await sb.from('project_member').delete().eq('project_id', projectId);
+
+    if (selectedMembers.length > 0) {
+      const membersToInsert = selectedMembers
+        .filter(m => m.id !== currentUserId) 
+        .map(m => ({
+          project_id: projectId, 
+          student_id: m.id       
+        }));
+        
+      if(membersToInsert.length > 0) {
+        const { error: mError } = await sb.from('project_member').insert(membersToInsert);
+        if (mError) {
+          Swal.fire({ icon: 'error', title: 'อัปเดตสมาชิกไม่สำเร็จ', html: `อัปเดตโครงงานได้ แต่จัดกลุ่มสมาชิกไม่สำเร็จ:<br>${mError.message}`, confirmButtonColor: '#c94b3f' });
+          saveBtn.disabled = false; saveBtn.textContent = '💾 บันทึกการแก้ไข';
+          return;
+        }
+      }
+    }
+
+    Swal.fire({
+      icon: 'success',
+      title: 'สำเร็จ!',
+      text: 'บันทึกการแก้ไขเรียบร้อยแล้ว! ✅',
+      confirmButtonColor: '#6fa36f'
+    }).then(() => {
+      window.location.href = 'student.html';
+    });
+  }
+
+  init();
+</script>
+
+</body>
+</html>

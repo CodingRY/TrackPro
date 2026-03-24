@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <title>TrackED | Register</title>
+
+  <!-- Google Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;600&display=swap" rel="stylesheet">
+
+  <!-- Supabase v2 -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: 'Noto Sans Thai', sans-serif;
+    }
+
+    body {
+      margin: 0;
+      background: #f6f1e9;
+    }
+
+    header {
+      background: #e9dfd3;
+      padding: 14px 28px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    header img {
+      width: 42px;
+      height: 42px;
+      border-radius: 8px;
+    }
+
+    header h1 {
+      font-size: 22px;
+      color: #4a3f35;
+      margin: 0;
+    }
+
+    main {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: calc(100vh - 80px);
+    }
+
+    .card {
+      background: #fff;
+      width: 400px;
+      padding: 28px;
+      border-radius: 18px;
+      box-shadow: 0 10px 25px rgba(0,0,0,.08);
+      text-align: center;
+    }
+
+    .card h2 {
+      margin-bottom: 18px;
+      color: #4a3f35;
+    }
+
+    input {
+      width: 100%;
+      padding: 12px 14px;
+      margin-bottom: 12px;
+      border-radius: 10px;
+      border: 1px solid #ddd;
+      font-size: 15px;
+    }
+
+    .role {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      margin: 10px 0 14px;
+    }
+
+    .student-only {
+      display: none;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      border-radius: 12px;
+      border: none;
+      background: #b0916f;
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #9e7f5f;
+    }
+
+    .login {
+      margin-top: 14px;
+      font-size: 14px;
+    }
+
+    .login a {
+      color: #7a5c3e;
+      text-decoration: none;
+      font-weight: 600;
+    }
+  </style>
+</head>
+
+<body>
+
+<header>
+  <img src="https://img5.pic.in.th/file/secure-sv1/ChatGPT-Image-19-..-2569-19_43_40d6225b2aebf85219.png">
+  <h1>TrackED</h1>
+</header>
+
+<main>
+  <div class="card">
+    <h2>สมัครสมาชิก</h2>
+
+    <input id="firstName" type="text" placeholder="ชื่อจริง">
+    <input id="lastName" type="text" placeholder="นามสกุล">
+    <input id="email" type="email" placeholder="Email">
+    <input id="password" type="password" placeholder="Password (อย่างน้อย 6 ตัว)">
+
+    <div class="role">
+      <label>
+        <input type="radio" name="role" value="teacher" checked> ครู
+      </label>
+      <label>
+        <input type="radio" name="role" value="student"> นักเรียน
+      </label>
+    </div>
+
+    <!-- เฉพาะนักเรียน -->
+    <div class="student-only" id="studentFields">
+      <input id="grade" type="text" placeholder="4/1">
+      <input id="no" type="number" placeholder="เลขที่">
+    </div>
+
+    <button id="registerBtn">Register</button>
+
+    <div class="login">
+      มีบัญชีแล้ว? <a href="index.html">เข้าสู่ระบบ</a>
+    </div>
+  </div>
+</main>
+
+<script>
+  /* ===============================
+     🔑 Supabase Config
+  =============================== */
+  const SUPABASE_URL = 'https://klszrjhdpvsiktddzpga.supabase.co'
+  const SUPABASE_ANON_KEY =
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtsc3pyamhkcHZzaWt0ZGR6cGdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE1MDMzODMsImV4cCI6MjA4NzA3OTM4M30.zcK4gseuAMxweSWEGWYSuUcPui0EJgOcE66XsKw6wUM'
+
+  const sb = supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_ANON_KEY
+  )
+
+  /* แสดง/ซ่อนช่องนักเรียน */
+  document.querySelectorAll('input[name="role"]').forEach(radio => {
+    radio.addEventListener('change', () => {
+      document.getElementById('studentFields').style.display =
+        radio.value === 'student' && radio.checked ? 'block' : 'none'
+    })
+  })
+
+  document.getElementById('registerBtn').addEventListener('click', register)
+
+  async function register() {
+    const firstName = document.getElementById('firstName').value.trim()
+    const lastName = document.getElementById('lastName').value.trim()
+    const email = document.getElementById('email').value.trim()
+    const password = document.getElementById('password').value.trim()
+    const role = document.querySelector('input[name="role"]:checked').value
+    const grade = document.getElementById('grade').value
+    const no = document.getElementById('no').value
+
+    if (!firstName || !lastName || !email || !password) {
+      alert('กรุณากรอกข้อมูลให้ครบ')
+      return
+    }
+
+    if (role === 'student' && (!grade || !no)) {
+      alert('กรุณากรอกชั้นและเลขที่')
+      return
+    }
+
+    /* สมัคร Auth */
+    const { data, error } = await sb.auth.signUp({
+      email,
+      password
+    })
+
+    if (error) {
+      alert(error.message)
+      return
+    }
+
+    /* บันทึก profile */
+    const { error: profileError } = await sb
+      .from('profiles')
+      .insert({
+        id: data.user.id,
+        role: role,
+        first_name: firstName,
+        last_name: lastName,
+        grade: role === 'student' ? grade : null,
+        no: role === 'student' ? Number(no) : null
+      })
+
+    if (profileError) {
+      alert('สมัครสำเร็จ แต่บันทึกข้อมูลไม่สำเร็จ')
+      console.error(profileError)
+      return
+    }
+
+    alert('สมัครสมาชิกสำเร็จ 🎉')
+    window.location.href = 'index.html'
+  }
+</script>
+
+</body>
+</html>
