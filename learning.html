@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>การเรียนรู้ | TrackPro</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="learning.css?v=20260730-4">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+  <header class="learning-topbar">
+    <a class="learning-brand" href="dashboard.html">
+      <span class="learning-brand-icon" aria-hidden="true">✦</span>
+      <span><strong>TrackPro Learning</strong><small>พื้นที่การเรียนรู้ของนักเรียน</small></span>
+    </a>
+    <nav class="learning-nav" aria-label="เมนูหลัก">
+      <a href="dashboard.html">หน้าหลัก</a>
+      <a class="active" href="learning.html">การเรียนรู้</a>
+      <a href="community.html">กระดานชุมชน</a>
+    </nav>
+    <div class="account-chip">
+      <span id="accountAvatar" class="account-avatar">น</span>
+      <div><strong id="accountName">กำลังโหลด...</strong><small>นักเรียน</small></div>
+    </div>
+  </header>
+
+  <main class="learning-main">
+    <div class="page-heading">
+      <div>
+        <p class="eyebrow">LEARNING PATH</p>
+        <h1>บทเรียนของฉัน</h1>
+        <p>เรียนผ่านวิดีโอและสะสมเวลาเพื่อพัฒนาโครงงานของคุณ</p>
+      </div>
+      <a class="outline-btn" href="dashboard.html">← กลับ Dashboard</a>
+    </div>
+
+    <div id="pageLoading" class="loading-state"><span></span>กำลังโหลดบทเรียน...</div>
+    <div id="pageError" class="error-state" hidden><strong>โหลดบทเรียนไม่สำเร็จ</strong><p id="pageErrorText"></p></div>
+    <div id="courseEmpty" class="empty-state" hidden><strong>ยังไม่มีบทเรียน</strong><p>ครูหรือผู้ดูแลระบบยังไม่ได้เผยแพร่บทเรียน</p></div>
+
+    <section id="courseContent" class="course-layout" hidden>
+      <article class="video-panel">
+        <div class="player-shell">
+          <div id="youtubePlayer"></div>
+          <div id="playerPlaceholder" class="player-placeholder">
+            <div><span>▶</span>เลือกบทเรียนเพื่อเริ่มเรียน</div>
+          </div>
+        </div>
+        <div class="lesson-current">
+          <h2 id="currentLessonTitle">เลือกบทเรียน</h2>
+          <p id="currentLessonDescription"></p>
+          <div class="watch-status">
+            <span id="watchStatusText">กดเล่นวิดีโอเพื่อเริ่มสะสมเวลา</span>
+            <span id="currentLessonProgress">0%</span>
+          </div>
+        </div>
+      </article>
+
+      <aside class="course-sidebar">
+        <div class="course-summary">
+          <h2>ความคืบหน้าการเรียน</h2>
+          <div class="progress-label"><span id="completionLabel">สำเร็จ 0/0 บท</span><strong id="overallPercent">0%</strong></div>
+          <div class="progress-track"><div id="overallProgress" class="progress-fill"></div></div>
+          <div class="summary-meta">
+            <span>⏱ เรียนแล้ว <strong id="totalWatchTime">0 นาที</strong></span>
+            <span>📚 <strong id="lessonCount">0</strong> บทเรียน</span>
+          </div>
+        </div>
+        <div id="lessonList" class="lesson-list" aria-label="รายการบทเรียน"></div>
+      </aside>
+    </section>
+  </main>
+
+  <div id="toast" class="toast" role="status"></div>
+  <script src="learning.js?v=20260730-4"></script>
+</body>
+</html>

@@ -2,6 +2,7 @@
 <html lang="th">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>TrackPro | เพิ่มโครงงานและสมาชิก</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;600&display=swap" rel="stylesheet">
   
@@ -27,12 +28,13 @@
     .remove-btn { color: #c94b3f; cursor: pointer; font-weight: bold; background: #fdeeee; padding: 4px 8px; border-radius: 6px; font-size: 12px; transition: 0.2s; }
     .remove-btn:hover { background: #f8d7d7; }
   </style>
+  <link rel="stylesheet" href="trackpro-theme.css">
 </head>
-<body>
+<body class="page-form page-add-project">
 
 <header>
-  <h1>➕ สร้างโครงงานใหม่</h1>
-  <a href="student.html">← กลับไปแผงควบคุม</a>
+  <h1>สร้างโครงงานใหม่</h1>
+  <a href="dashboard.html">← กลับไป Dashboard</a>
 </header>
 
 <div class="container">
@@ -208,7 +210,7 @@
       confirmButtonColor: '#6fa36f'
     }).then(() => {
       // โค้ดส่วนนี้จะทำงานเมื่อผู้ใช้กดปุ่ม "OK" บน Pop-up
-      window.location.href = 'student.html';
+      window.location.href = 'leaderProjects.html';
     });
   }
 

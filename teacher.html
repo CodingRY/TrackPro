@@ -2,6 +2,7 @@
 <html lang="th">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Teacher Dashboard | TrackED</title>
 
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;600&display=swap" rel="stylesheet">
@@ -28,14 +29,17 @@
       color: #4a3f35;
     }
 
-    header button {
+    header button, header a {
       background: #b0916f;
       border: none;
       color: #fff;
       padding: 10px 16px;
       border-radius: 10px;
       cursor: pointer;
+      text-decoration: none;
     }
+
+    .header-actions { display: flex; align-items: center; gap: 10px; }
 
     main {
       padding: 30px;
@@ -87,9 +91,43 @@
       margin-bottom: 14px;
     }
 
+    .project-deadlines {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      margin: 0 0 14px;
+    }
+
+    .deadline-pill {
+      padding: 5px 9px;
+      border-radius: 999px;
+      background: #fff1cf;
+      color: #765c24;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .deadline-pill.competition { background: #f8e5d2; color: #855530; }
+    .deadline-pill.overdue { background: #f9e4e1; color: #9d4037; }
+    .deadline-pill.unset { background: #eee8df; color: #75675b; }
+
     .actions {
       display: flex;
       gap: 10px;
+    }
+
+    .workspace-link {
+      display: block;
+      margin-bottom: 10px;
+      padding: 9px 12px;
+      border: 1px solid #cddacb;
+      border-radius: 10px;
+      color: #557259;
+      background: #edf4eb;
+      text-align: center;
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 600;
     }
 
     .approve {
@@ -117,22 +155,51 @@
       color: #777;
       margin-top: 40px;
     }
+
+    .readonly-notice {
+      margin-bottom: 20px;
+      padding: 13px 16px;
+      border: 1px solid #cbdcc9;
+      border-radius: 12px;
+      background: #edf4eb;
+      color: #4d6d51;
+      font-size: 14px;
+    }
+
+    .readonly-state {
+      padding: 10px 12px;
+      border-radius: 10px;
+      background: #eee8df;
+      color: #75675b;
+      font-size: 13px;
+      text-align: center;
+    }
+
+    .readonly-state.approved { color: #4d6d51; background: #e9f3e8; }
+    .readonly-state.rejected { color: #a04941; background: #f9e8e6; }
   </style>
+  <link rel="stylesheet" href="trackpro-theme.css">
 </head>
 
-<body>
+<body class="page-teacher">
 
 <header>
-  <h1>👩‍🏫 ครูที่ปรึกษา</h1>
-  <button onclick="logout()">ออกจากระบบ</button>
+  <h1>ครูที่ปรึกษา</h1>
+  <div class="header-actions">
+    <a href="dashboard.html">📊 Dashboard</a>
+    <button onclick="logout()">ออกจากระบบ</button>
+  </div>
 </header>
 
 <main>
-  <h2>โครงงานที่รอการอนุมัติ</h2>
+  <h2>โครงงานที่คุณดูแลทั้งหมด</h2>
+  <div id="readonlyNotice" class="readonly-notice" hidden>
+    🛡️ บัญชี Admin ดูรายการโครงงานได้เท่านั้น การอนุมัติหรือปฏิเสธเป็นสิทธิ์ของครูที่ปรึกษา
+  </div>
 
   <div id="projectGrid" class="grid"></div>
   <div id="empty" class="empty" style="display:none;">
-    🎉 ไม่มีโครงงานที่รออนุมัติ
+    ยังไม่มีโครงงานที่อยู่ในความดูแล
   </div>
 </main>
 
@@ -147,6 +214,7 @@
   const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
 
   let teacherName = ''
+  let isAdmin = false
 
   /* ===============================
       Init
@@ -169,13 +237,22 @@
       .eq('id', user.id)
       .single()
 
-    if (!profile || profile.role !== 'teacher') {
+    if (!profile || !['teacher', 'admin'].includes(profile.role)) {
       alert('บัญชีนี้ไม่ใช่ครู')
       location.href = 'index.html'
       return
     }
 
-    teacherName = `${profile.first_name} ${profile.last_name}`
+    isAdmin = profile.role === 'admin'
+    teacherName = `${profile.first_name || ''} ${profile.last_name || ''}`.trim()
+
+    if (isAdmin) {
+      document.querySelector('header h1').textContent = 'ตรวจโครงงานทั้งหมด'
+      document.querySelector('header a').href = 'admin.html'
+      document.querySelector('header a').textContent = '🛡️ Admin Dashboard'
+      document.querySelector('main h2').textContent = 'โครงงานทั้งหมด (ดูอย่างเดียว)'
+      document.getElementById('readonlyNotice').hidden = false
+    }
 
     loadProjects()
   }
@@ -184,12 +261,14 @@
       Load Pending Projects
   =============================== */
   async function loadProjects() {
-    const { data, error } = await sb
+    let query = sb
       .from('student_projects')
       .select('*')
-      .eq('advisor', teacherName)
-      .eq('status', 'pending')
       .order('created_at', { ascending: false })
+
+    if (!isAdmin) query = query.eq('advisor', teacherName)
+
+    const { data, error } = await query
 
     if (error) {
       alert('โหลดข้อมูลไม่สำเร็จ')
@@ -198,53 +277,111 @@
 
     const grid = document.getElementById('projectGrid')
     grid.innerHTML = ''
+    document.getElementById('empty').style.display = 'none'
 
     if (!data || data.length === 0) {
       document.getElementById('empty').style.display = 'block'
       return
     }
 
+    data.sort((a, b) => {
+      const pendingDifference = Number((b.status || 'pending') === 'pending') - Number((a.status || 'pending') === 'pending')
+      return pendingDifference || new Date(b.created_at || 0) - new Date(a.created_at || 0)
+    })
+
     data.forEach(p => {
       const div = document.createElement('div')
-      div.className = 'card'
+      const projectStatus = ['approved', 'rejected'].includes(p.status) ? p.status : 'pending'
+      div.className = `card ${projectStatus}`
+      const statusLabel = projectStatus === 'approved' ? 'อนุมัติแล้ว' : projectStatus === 'rejected' ? 'ไม่ผ่านการอนุมัติ' : 'รอตรวจสอบ'
+      const reviewActions = isAdmin
+        ? `<div class="readonly-state ${projectStatus}">${statusLabel} • Admin ดูอย่างเดียว</div>`
+        : projectStatus === 'pending'
+          ? `<div class="actions">
+            <button class="approve" onclick="updateStatus(${p.id}, 'approved')">อนุมัติ</button>
+            <button class="reject" onclick="updateStatus(${p.id}, 'rejected')">ปฏิเสธ</button>
+          </div>`
+          : projectStatus === 'rejected'
+            ? `<div class="actions">
+              <button class="approve" onclick="updateStatus(${p.id}, 'approved', 'rejected')">เปลี่ยนเป็นอนุมัติ</button>
+            </div>`
+          : `<div class="readonly-state ${projectStatus}">${statusLabel}</div>`
 
       div.innerHTML = `
         <div class="tag">${p.category}</div>
         <div class="title">${p.title}</div>
         <div class="meta">👨‍🎓 ${p.student_name} | ${p.grade}</div>
         <div class="desc">${p.description || ''}</div>
+        ${renderProjectDeadlines(p)}
 
-        <div class="actions">
-          <button class="approve" onclick="updateStatus(${p.id}, 'approved')">
-            อนุมัติ
-          </button>
-          <button class="reject" onclick="updateStatus(${p.id}, 'rejected')">
-            ปฏิเสธ
-          </button>
-        </div>
+        <a class="workspace-link" href="projectDetail.html?id=${encodeURIComponent(p.id)}">💬 เปิดพื้นที่โครงงานและส่งงาน</a>
+        ${reviewActions}
       `
 
       grid.appendChild(div)
     })
   }
 
+  function renderProjectDeadlines(project) {
+    const proposal = project.proposal_due_date
+      ? `<span class="deadline-pill ${deadlineClass(project.proposal_due_date)}">📝 ส่งข้อเสนอ ${formatDeadlineDate(project.proposal_due_date)}</span>`
+      : '<span class="deadline-pill unset">📝 ยังไม่กำหนดวันส่งข้อเสนอ</span>'
+    const competition = project.competition_due_date
+      ? `<span class="deadline-pill competition ${deadlineClass(project.competition_due_date)}">🏆 ${escapeDeadline(project.competition_name || 'ส่งแข่งขัน')} ${formatDeadlineDate(project.competition_due_date)}</span>`
+      : ''
+    return `<div class="project-deadlines">${proposal}${competition}</div>`
+  }
+
+  function deadlineClass(dateValue) {
+    const today = new Date()
+    const todayValue = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
+    return dateValue < todayValue ? 'overdue' : ''
+  }
+
+  function formatDeadlineDate(dateValue) {
+    return new Intl.DateTimeFormat('th-TH', { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(`${dateValue}T00:00:00`))
+  }
+
+  function escapeDeadline(value) {
+    const element = document.createElement('div')
+    element.textContent = String(value || '')
+    return element.innerHTML
+  }
+
   /* ===============================
       Update Status
   =============================== */
-  async function updateStatus(id, status) {
+  async function updateStatus(id, status, previousStatus = '') {
+    if (!['approved', 'rejected'].includes(status)) return
+
+    const { data: { user } } = await sb.auth.getUser()
+    const { data: reviewer } = user
+      ? await sb.from('profiles').select('first_name, last_name, role').eq('id', user.id).single()
+      : { data: null }
+    const reviewerName = `${reviewer?.first_name || ''} ${reviewer?.last_name || ''}`.trim()
+
+    if (reviewer?.role !== 'teacher' || reviewerName !== teacherName) {
+      alert('เฉพาะครูที่ปรึกษาเท่านั้นที่สามารถอนุมัติหรือปฏิเสธโครงงานได้')
+      return
+    }
+
     const confirmText =
-      status === 'approved'
+      status === 'approved' && previousStatus === 'rejected'
+        ? 'ยืนยันเปลี่ยนโครงงานที่ไม่ผ่านให้เป็นอนุมัติแล้ว?'
+        : status === 'approved'
         ? 'ยืนยันอนุมัติโครงงานนี้?'
         : 'ยืนยันปฏิเสธโครงงานนี้?'
 
     if (!confirm(confirmText)) return
 
-    const { error } = await sb
+    const { data: updatedProjects, error } = await sb
       .from('student_projects')
       .update({ status })
       .eq('id', id)
+      .eq('advisor', teacherName)
+      .select('id')
 
-    if (error) {
+    if (error || updatedProjects?.length !== 1) {
       alert('อัปเดตสถานะไม่สำเร็จ')
       return
     }

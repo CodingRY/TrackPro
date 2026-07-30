@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>โครงงานที่ฉันเป็นหัวหน้ากลุ่ม | TrackPro</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="studentProjects.css">
+  <link rel="stylesheet" href="trackpro-theme.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body class="page-student-projects" data-mode="leader">
+  <header class="topbar">
+    <a class="brand" href="dashboard.html"><span class="brand-mark" aria-hidden="true">🎓</span><span>TrackPro</span></a>
+    <div class="top-actions">
+      <a class="dashboard-link" href="dashboard.html">Dashboard</a>
+      <button class="logout-btn" type="button" onclick="logout()">ออกจากระบบ</button>
+    </div>
+  </header>
+
+  <main>
+    <nav class="tabs" aria-label="ประเภทโครงงานของฉัน">
+      <a class="tab active" href="leaderProjects.html" aria-current="page">👑 หัวหน้ากลุ่ม</a>
+      <a class="tab" href="memberProjects.html">👥 สมาชิกกลุ่ม</a>
+    </nav>
+
+    <section class="hero">
+      <div>
+        <p class="eyebrow">บทบาทหัวหน้ากลุ่ม <span id="profileName"></span></p>
+        <h1>โครงงานที่ฉันเป็นหัวหน้ากลุ่ม</h1>
+        <p>สร้างโครงงาน จัดการสมาชิก และแก้ไขรายละเอียดได้จากหน้านี้</p>
+      </div>
+      <a class="primary-action" href="addProject.html">+ เพิ่มโครงงานใหม่</a>
+    </section>
+
+    <section class="stats" aria-label="สรุปสถานะโครงงาน">
+      <article class="stat-card"><div class="stat-label">ทั้งหมด</div><div id="totalCount" class="stat-value">0</div></article>
+      <article class="stat-card"><div class="stat-label">รออนุมัติ</div><div id="pendingCount" class="stat-value">0</div></article>
+      <article class="stat-card"><div class="stat-label">อนุมัติแล้ว</div><div id="approvedCount" class="stat-value">0</div></article>
+      <article class="stat-card"><div class="stat-label">ไม่ผ่าน</div><div id="rejectedCount" class="stat-value">0</div></article>
+    </section>
+
+    <section class="content-panel">
+      <div class="panel-head"><h2>รายการโครงงาน</h2><span id="projectCountLabel" class="project-count">0 โครงงาน</span></div>
+      <div id="loading" class="loading">กำลังโหลดโครงงาน...</div>
+      <div id="projectGrid" class="project-grid"></div>
+      <div id="emptyState" class="empty-state"><strong>ยังไม่มีโครงงานที่คุณเป็นหัวหน้ากลุ่ม</strong>เริ่มต้นได้ด้วยการเพิ่มโครงงานใหม่</div>
+    </section>
+  </main>
+
+  <script src="studentProjects.js"></script>
+</body>
+</html>

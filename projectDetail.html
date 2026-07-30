@@ -1,208 +1,163 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>รายละเอียดโครงงาน</title>
+  <title>พื้นที่โครงงาน | TrackPro</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="projectWorkspace.css?v=20260730-9">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-  <style>
-    body { margin: 0; font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; background: #f6efe6; color: #3b3b3b; }
-    header { background: #e9dfcf; padding: 18px 32px; display: flex; justify-content: space-between; align-items: center; }
-    header h1 { margin: 0; font-size: 22px; }
-    .back-btn { background: #9a8c7d; color: white; border: none; padding: 10px 20px; border-radius: 10px; cursor: pointer; text-decoration: none; font-size: 16px; }
-    .back-btn:hover { background: #7a6e60; }
-    main { padding: 32px; max-width: 1000px; margin: 0 auto; }
-
-    /* แถบสถานะแบบ Stepper */
-    .stepper-wrapper { display: flex; justify-content: space-between; position: relative; margin: 20px 0 40px 0; max-width: 800px; margin-left: auto; margin-right: auto; }
-    .stepper-wrapper::before { content: ""; position: absolute; top: 18px; left: 0; width: 100%; height: 3px; background: #e0e0e0; z-index: 1; }
-    .stepper-item { position: relative; display: flex; flex-direction: column; align-items: center; z-index: 2; flex: 1; }
-    .step-counter { width: 40px; height: 40px; border-radius: 50%; background: #fff; border: 3px solid #e0e0e0; display: flex; justify-content: center; align-items: center; font-weight: bold; color: #aaa; margin-bottom: 8px; transition: 0.3s; }
-    .step-name { font-size: 14px; color: #999; font-weight: 600; text-align: center; }
-    
-    .stepper-item.completed .step-counter { background: #6fa36f; border-color: #6fa36f; color: white; }
-    .stepper-item.completed .step-name { color: #6fa36f; }
-    .stepper-item.active .step-counter { background: #d9a05b; border-color: #d9a05b; color: white; box-shadow: 0 0 10px rgba(217, 160, 91, 0.4); }
-    .stepper-item.active .step-name { color: #d9a05b; }
-    .stepper-item.rejected .step-counter { background: #c94b3f; border-color: #c94b3f; color: white; }
-    .stepper-item.rejected .step-name { color: #c94b3f; }
-
-    /* Layout 2 คอลัมน์ */
-    .detail-layout { display: flex; gap: 30px; align-items: flex-start; flex-wrap: wrap; }
-    .detail-main { flex: 2; min-width: 300px; background: #fff; padding: 30px; border-radius: 20px; box-shadow: 0 8px 20px rgba(0,0,0,0.05); }
-    .detail-summary { flex: 1; min-width: 300px; background: #fffaf2; padding: 25px; border-radius: 20px; box-shadow: 0 8px 20px rgba(0,0,0,0.05); border: 2px solid #e9dfcf; }
-    
-    .detail-title { font-size: 24px; color: #5a4a3a; margin-top: 0; border-bottom: 2px solid #eee; padding-bottom: 15px; }
-    .detail-label { font-size: 12px; color: #888; text-transform: uppercase; letter-spacing: 1px; margin-top: 20px; }
-    .detail-value { font-size: 16px; color: #333; margin-top: 5px; line-height: 1.6; white-space: pre-wrap; }
-    
-    .summary-box { background: #fff; padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #eee; }
-    .summary-title { font-weight: bold; color: #5a4a3a; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
-
-    #loading { text-align: center; padding: 50px; font-size: 18px; color: #5a4a3a; }
-    #contentContainer { display: none; }
-  </style>
 </head>
 <body>
-
-<header>
-  <h1>📑 รายละเอียดโครงงาน</h1>
-  <a href="student.html" class="back-btn">← กลับไปหน้าหลัก</a>
-</header>
-
-<main>
-  <div id="loading">กำลังโหลดข้อมูลโครงงาน... ⏳</div>
-
-  <div id="contentContainer">
-    <div class="stepper-wrapper" id="projectStepper">
-      <div class="stepper-item" id="step1">
-        <div class="step-counter">1</div>
-        <div class="step-name">เสนอโครงงาน</div>
-      </div>
-      <div class="stepper-item" id="step2">
-        <div class="step-counter">2</div>
-        <div class="step-name">รออนุมัติ</div>
-      </div>
-      <div class="stepper-item" id="step3">
-        <div class="step-counter">3</div>
-        <div class="step-name">ดำเนินการ</div>
-      </div>
-      <div class="stepper-item" id="step4">
-        <div class="step-counter">4</div>
-        <div class="step-name">เสร็จสมบูรณ์</div>
+  <header class="workspace-topbar">
+    <a id="brandHome" class="workspace-brand" href="dashboard.html">
+      <span class="brand-mark" aria-hidden="true">✦</span>
+      <span><strong>TrackPro</strong><small>พื้นที่ทำงานโครงงาน</small></span>
+    </a>
+    <div class="top-actions">
+      <button id="refreshButton" class="icon-button" type="button">↻ อัปเดตข้อมูล</button>
+      <a id="backLink" class="back-link" href="dashboard.html">← กลับ Dashboard</a>
+      <div id="accountMenu" class="account-menu">
+        <button id="accountMenuButton" class="account-chip" type="button" aria-haspopup="menu" aria-expanded="false">
+          <span id="accountAvatar" class="account-avatar">ผ</span>
+          <span class="account-copy"><strong id="accountName">กำลังโหลด...</strong><small id="accountRole"></small></span>
+          <span class="account-chevron" aria-hidden="true">⌄</span>
+        </button>
+        <div id="accountDropdown" class="account-dropdown" role="menu" hidden>
+          <a id="editProfileLink" href="profile.html" role="menuitem"><span aria-hidden="true">👤</span><span><strong>แก้ไขข้อมูลส่วนตัว</strong><small>ชื่อ ข้อมูล และรูปประจำตัว</small></span></a>
+          <button id="accountLogout" type="button" role="menuitem"><span aria-hidden="true">↪</span><span><strong>ออกจากระบบ</strong><small>กลับไปยังหน้าเข้าสู่ระบบ</small></span></button>
+        </div>
       </div>
     </div>
+  </header>
 
-    <div class="detail-layout">
-      <div class="detail-main">
-        <h2 class="detail-title" id="dt-title">ชื่อโครงงาน</h2>
-        
-        <div class="detail-label">รายละเอียด / บทคัดย่อ</div>
-        <div class="detail-value" id="dt-desc">...</div>
-        
-        <div class="detail-label">หมวดหมู่</div>
-        <div class="detail-value" id="dt-category">...</div>
-        
-        <div class="detail-label">วันที่เสนอโครงงาน</div>
-        <div class="detail-value" id="dt-date">...</div>
-      </div>
-      
-      <div class="detail-summary">
-        <div class="summary-box">
-          <div class="summary-title">🎓 โครงสร้างทีม</div>
-          <div style="font-size: 14px;">
-            <strong>หัวหน้ากลุ่ม:</strong> <span id="dt-owner"></span><br><br>
-            <strong>สมาชิก:</strong> 
-            <div id="dt-members" style="color:#666; margin-top:5px; padding-left:10px; border-left:3px solid #e9dfcf;"></div>
+  <main class="workspace-main">
+    <div id="pageLoading" class="page-state"><span class="spinner"></span>กำลังเปิดพื้นที่โครงงาน...</div>
+    <div id="pageError" class="page-state error" hidden>
+      <strong>ไม่สามารถเปิดพื้นที่โครงงานได้</strong>
+      <p id="pageErrorText"></p>
+      <a href="dashboard.html">กลับ Dashboard</a>
+    </div>
+
+    <div id="workspaceContent" hidden>
+      <section class="project-hero">
+        <div class="hero-copy">
+          <div class="hero-badges">
+            <span id="projectCategory" class="category-badge">โครงงาน</span>
+            <span id="projectStatus" class="status-badge">รออนุมัติ</span>
           </div>
+          <h1 id="projectTitle">ชื่อโครงงาน</h1>
+          <p id="projectDescription"></p>
+          <div class="project-people">
+            <div class="project-person advisor-person">
+              <span class="person-icon" aria-hidden="true">👨‍🏫</span>
+              <span><small>ครูที่ปรึกษาโครงงาน</small><strong id="projectAdvisor">-</strong></span>
+            </div>
+            <div class="project-person">
+              <span class="person-icon" aria-hidden="true">👥</span>
+              <span><small>นักเรียนในโครงงาน</small><strong id="projectMembers">-</strong></span>
+            </div>
+          </div>
+          <section class="deadline-section" aria-labelledby="deadlineTitle">
+            <div class="deadline-heading">
+              <div><small>PROJECT DEADLINES</small><h2 id="deadlineTitle">กำหนดส่งโครงงาน</h2></div>
+              <button id="showDeadlineForm" class="deadline-edit-button" type="button" hidden>✏️ กำหนดวันส่ง</button>
+            </div>
+            <div class="deadline-grid">
+              <article id="proposalDeadlineCard" class="deadline-card proposal">
+                <span class="deadline-icon" aria-hidden="true">📝</span>
+                <span><small>ครบกำหนดส่งข้อเสนอโครงงาน</small><strong id="proposalDeadlineText">ยังไม่กำหนด</strong><em id="proposalDeadlineStatus">รอครูที่ปรึกษากำหนดวัน</em></span>
+              </article>
+              <article id="competitionDeadlineCard" class="deadline-card competition" hidden>
+                <span class="deadline-icon" aria-hidden="true">🏆</span>
+                <span><small id="competitionDeadlineLabel">กำหนดส่งแข่งขัน</small><strong id="competitionDeadlineText">-</strong><em id="competitionDeadlineStatus"></em></span>
+              </article>
+            </div>
+            <form id="deadlineForm" class="deadline-editor" hidden>
+              <label><span>วันครบกำหนดส่งข้อเสนอโครงงาน</span><input id="proposalDueDate" type="date" required></label>
+              <label class="competition-toggle"><input id="hasCompetitionDeadline" type="checkbox"><span>โครงงานนี้มีกำหนดส่งแข่งขันเป็นกรณีพิเศษ</span></label>
+              <div id="competitionDeadlineFields" class="competition-fields" hidden>
+                <label><span>ชื่อการแข่งขัน</span><input id="competitionName" type="text" maxlength="160" placeholder="เช่น งานศิลปหัตถกรรมนักเรียน"></label>
+                <label><span>กำหนดส่งแข่งขัน</span><input id="competitionDueDate" type="date"></label>
+              </div>
+              <div class="form-actions"><button id="cancelDeadlineEdit" class="secondary-button" type="button">ยกเลิก</button><button id="saveDeadlineButton" class="primary-button" type="submit">บันทึกกำหนดการ</button></div>
+            </form>
+          </section>
         </div>
-        
-        <div class="summary-box">
-          <div class="summary-title">👨‍🏫 ครูที่ปรึกษา</div>
-          <div style="font-size: 14px;" id="dt-advisor"></div>
+        <div class="project-progress-card">
+          <div class="progress-number"><strong id="projectProgress">0%</strong><span>ความคืบหน้า</span></div>
+          <div class="progress-track"><div id="projectProgressBar" class="progress-fill"></div></div>
+          <p id="projectTaskSummary">ยังไม่มีหัวข้องาน</p>
+          <button id="approveProjectButton" class="approve-project-button" type="button" hidden>✓ อนุมัติโครงงาน</button>
+        </div>
+      </section>
+
+      <div id="viewerNotice" class="viewer-notice" hidden></div>
+
+      <section id="studentLearningPanel" class="project-learning-panel" hidden>
+        <div class="learning-panel-head">
+          <div>
+            <p class="eyebrow">STUDENT LEARNING</p>
+            <h2>ความคืบหน้าบทเรียนของสมาชิก</h2>
+            <p>คำนวณจากเวลาเรียนจริงของนักเรียนแต่ละคนในโครงงานนี้</p>
+          </div>
+          <strong id="projectLearningAverage" class="learning-average">เฉลี่ย 0%</strong>
+        </div>
+        <div id="studentLearningList" class="student-learning-grid">
+          <div class="learning-progress-loading"><span class="spinner"></span>กำลังโหลดความคืบหน้าการเรียน...</div>
+        </div>
+      </section>
+
+      <section class="workspace-layout">
+        <div class="tasks-column">
+          <div class="section-heading">
+            <div><p class="eyebrow">PROJECT WORKFLOW</p><h2>หัวข้องานและการส่งตรวจ</h2><p>ส่งงานตามลำดับ เมื่อครูกดผ่าน ระบบจะเปิดหัวข้อถัดไป</p></div>
+            <button id="showTaskForm" class="primary-button" type="button" hidden>+ เพิ่มหัวข้องาน</button>
+          </div>
+
+          <form id="taskForm" class="task-editor" hidden>
+            <input id="editingTaskId" type="hidden">
+            <div>
+              <label for="taskTitle">ชื่อหัวข้องาน</label>
+              <input id="taskTitle" type="text" maxlength="160" placeholder="เช่น จัดทำบทคัดย่อ" required>
+            </div>
+            <div>
+              <label for="taskInstructions">คำชี้แจงและสิ่งที่ต้องส่ง</label>
+              <textarea id="taskInstructions" rows="4" maxlength="2000" placeholder="อธิบายรายละเอียด เกณฑ์ หรือรูปแบบไฟล์ที่ต้องการ"></textarea>
+            </div>
+            <div class="form-actions">
+              <button id="cancelTaskEdit" class="secondary-button" type="button">ยกเลิก</button>
+              <button id="saveTaskButton" class="primary-button" type="submit">เพิ่มหัวข้องาน</button>
+            </div>
+          </form>
+
+          <div id="tasksEmpty" class="empty-card" hidden>
+            <span aria-hidden="true">📋</span>
+            <strong>ยังไม่มีหัวข้องาน</strong>
+            <p id="tasksEmptyText">รอครูที่ปรึกษาเพิ่มหัวข้องานแรก</p>
+          </div>
+          <div id="tasksList" class="tasks-list"></div>
         </div>
 
-        <div class="summary-box" style="background: #eef5ee; border-color: #cde0cd;">
-          <div class="summary-title">📊 ความคืบหน้าปัจจุบัน</div>
-          <div style="font-size: 24px; font-weight: bold; color: #5a7a5d;" id="dt-progress">0%</div>
-        </div>
-      </div>
+        <aside class="chat-panel">
+          <div class="chat-head">
+            <div><h2>พูดคุยในโครงงาน</h2><p id="chatParticipants">ครูที่ปรึกษาและสมาชิกทุกคน</p></div>
+            <span class="online-dot" title="พร้อมรับข้อความ"></span>
+          </div>
+          <div id="messageList" class="message-list"></div>
+          <div id="messagesEmpty" class="chat-empty">ยังไม่มีข้อความ<br>เริ่มพูดคุยเกี่ยวกับโครงงานได้เลย</div>
+          <form id="messageForm" class="message-form">
+            <textarea id="messageInput" rows="2" maxlength="2000" placeholder="พิมพ์ข้อความ... (Enter เพื่อส่ง)" aria-label="ข้อความ กด Enter เพื่อส่ง หรือ Shift Enter เพื่อขึ้นบรรทัดใหม่" required></textarea>
+            <button id="sendMessageButton" type="submit" aria-label="ส่งข้อความ">ส่ง</button>
+          </form>
+        </aside>
+      </section>
     </div>
-  </div>
-</main>
+  </main>
 
-<script>
-  const supabaseClient = supabase.createClient(
-    "https://klszrjhdpvsiktddzpga.supabase.co", 
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtsc3pyamhkcHZzaWt0ZGR6cGdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE1MDMzODMsImV4cCI6MjA4NzA3OTM4M30.zcK4gseuAMxweSWEGWYSuUcPui0EJgOcE66XsKw6wUM"
-  );
-
-  init();
-
-  async function init() {
-    // 1. ดึง ID โครงงานจาก URL (?id=...)
-    const urlParams = new URLSearchParams(window.location.search);
-    const projectId = urlParams.get('id');
-
-    if (!projectId) {
-      alert("ไม่พบรหัสโครงงาน");
-      window.location.href = "student.html";
-      return;
-    }
-
-    // 2. ดึงข้อมูลจากฐานข้อมูล
-    await loadProjectData(projectId);
-  }
-
-  async function loadProjectData(projectId) {
-    // ดึงข้อมูลโครงงานหลัก
-    const { data: project, error: pErr } = await supabaseClient
-      .from("student_projects")
-      .select("*")
-      .eq("id", projectId)
-      .single();
-
-    if (pErr || !project) {
-      alert("ไม่สามารถดึงข้อมูลโครงงานนี้ได้");
-      window.location.href = "student.html";
-      return;
-    }
-
-    // ดึงรายชื่อสมาชิก
-    const { data: membersInfo } = await supabaseClient
-      .from("project_member")
-      .select("profiles(first_name, last_name)")
-      .eq("project_id", projectId);
-
-    const memberNames = membersInfo ? membersInfo.map(m => m.profiles ? `${m.profiles.first_name} ${m.profiles.last_name}` : "") : [];
-
-    // เติมข้อมูลลงบนหน้าจอ
-    document.getElementById('dt-title').textContent = project.title;
-    document.getElementById('dt-desc').textContent = project.description || "ไม่มีรายละเอียด";
-    document.getElementById('dt-category').textContent = project.category || "-";
-    document.getElementById('dt-date').textContent = new Date(project.created_at).toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' });
-    
-    document.getElementById('dt-owner').textContent = project.student_name;
-    document.getElementById('dt-advisor').textContent = project.advisor || "ยังไม่ระบุ";
-    document.getElementById('dt-progress').textContent = `${project.progress || 0}%`;
-
-    const membersHtml = memberNames.length > 0 ? memberNames.map(name => `• ${name}`).join('<br>') : 'ไม่มีสมาชิกอื่นในกลุ่ม';
-    document.getElementById('dt-members').innerHTML = membersHtml;
-
-    // อัปเดตแถบสถานะ
-    updateStepper(project.status, project.progress || 0);
-
-    // แสดงเนื้อหา และซ่อนตัว Loading
-    document.getElementById('loading').style.display = 'none';
-    document.getElementById('contentContainer').style.display = 'block';
-  }
-
-  function updateStepper(status, progress) {
-    const steps = [document.getElementById('step1'), document.getElementById('step2'), document.getElementById('step3'), document.getElementById('step4')];
-    
-    steps[0].classList.add('completed');
-
-    if (status === 'rejected') {
-      steps[1].classList.add('rejected');
-      steps[1].querySelector('.step-name').textContent = "❌ ไม่ผ่านอนุมัติ";
-    } else if (status === 'approved') {
-      steps[1].classList.add('completed');
-      steps[1].querySelector('.step-name').textContent = "✅ อนุมัติแล้ว";
-      
-      if (progress > 0 && progress < 100) {
-        steps[2].classList.add('active');
-      } else if (progress === 100) {
-        steps[2].classList.add('completed');
-        steps[3].classList.add('completed');
-      } else {
-        steps[2].classList.add('active');
-      }
-    } else {
-      steps[1].classList.add('active');
-    }
-  }
-</script>
-
+  <div id="toast" class="toast" role="status"></div>
+  <script src="projectWorkspace.js?v=20260730-10"></script>
 </body>
 </html>

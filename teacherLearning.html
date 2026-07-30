@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ความคืบหน้าการเรียน | TrackPro</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="learning.css?v=20260730-4">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+  <header class="learning-topbar">
+    <a class="learning-brand" href="dashboard.html">
+      <span class="learning-brand-icon" aria-hidden="true">📊</span>
+      <span><strong>รายงานการเรียน</strong><small>สำหรับครูที่ปรึกษาโครงงาน</small></span>
+    </a>
+    <nav class="learning-nav" aria-label="เมนูหลัก">
+      <a href="dashboard.html">หน้าหลัก</a>
+      <a class="active" href="teacherLearning.html">ความคืบหน้าการเรียน</a>
+    </nav>
+    <div class="account-chip">
+      <span id="accountAvatar" class="account-avatar">ค</span>
+      <div><strong id="accountName">กำลังโหลด...</strong><small>ครูที่ปรึกษา</small></div>
+    </div>
+  </header>
+
+  <main class="learning-main">
+    <div class="page-heading">
+      <div>
+        <p class="eyebrow">ADVISOR LEARNING REPORT</p>
+        <h1>ความคืบหน้าของนักเรียน</h1>
+        <p>ติดตามเวลาเรียนและบทเรียนของนักเรียนในโครงงานที่คุณเป็นที่ปรึกษา</p>
+      </div>
+      <a class="outline-btn" href="dashboard.html">← กลับ Dashboard</a>
+    </div>
+
+    <section class="report-stats" aria-label="สรุปความคืบหน้า">
+      <article class="stat-card"><span>นักเรียนที่ดูแล</span><strong id="studentCount">0</strong></article>
+      <article class="stat-card"><span>ความคืบหน้าเฉลี่ย</span><strong id="averageProgress">0%</strong></article>
+      <article class="stat-card"><span>เวลาเรียนรวม</span><strong id="totalWatchTime">0 นาที</strong></article>
+    </section>
+
+    <section class="report-panel">
+      <div class="report-head">
+        <div><h2>รายชื่อนักเรียน</h2><p id="reportSummary" class="section-note">กำลังโหลดข้อมูล...</p></div>
+        <label class="report-filter"><input id="studentSearch" type="search" placeholder="ค้นหาชื่อ ชั้น หรือโครงงาน" aria-label="ค้นหานักเรียน"></label>
+      </div>
+      <div id="reportLoading" class="loading-state"><span></span>กำลังประมวลผลความคืบหน้า...</div>
+      <div id="reportError" class="error-state" hidden><strong>โหลดรายงานไม่สำเร็จ</strong><p id="reportErrorText"></p></div>
+      <div id="studentEmpty" class="empty-state" hidden><strong>ยังไม่มีนักเรียนในความดูแล</strong><p>รายงานจะแสดงเมื่อนักเรียนเลือกคุณเป็นครูที่ปรึกษาโครงงาน</p></div>
+      <div id="studentProgressList" class="student-progress-list"></div>
+    </section>
+  </main>
+
+  <script src="teacherLearning.js?v=20260730-4"></script>
+</body>
+</html>

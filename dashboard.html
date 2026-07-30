@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard | TrackPro</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    :root {
+      --bg: #f7f3ec;
+      --surface: #ffffff;
+      --surface-soft: #fbf8f2;
+      --text: #3f382f;
+      --muted: #7c7165;
+      --line: #e7ded2;
+      --green: #648468;
+      --green-dark: #4d6e52;
+      --sand: #b8956e;
+      --amber: #c48b3f;
+      --red: #bd5b50;
+      --shadow: 0 14px 35px rgba(72, 58, 43, 0.08);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at 100% 0%, rgba(184, 149, 110, 0.13), transparent 28rem),
+        var(--bg);
+      color: var(--text);
+      font-family: 'Noto Sans Thai', sans-serif;
+    }
+
+    button, a { font: inherit; }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      padding: 16px clamp(20px, 4vw, 56px);
+      background: rgba(247, 243, 236, 0.9);
+      border-bottom: 1px solid rgba(214, 201, 186, 0.8);
+      backdrop-filter: blur(14px);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: var(--text);
+      text-decoration: none;
+      font-size: 20px;
+      font-weight: 700;
+    }
+
+    .brand-mark {
+      display: grid;
+      width: 42px;
+      height: 42px;
+      place-items: center;
+      border-radius: 13px;
+      background: var(--green);
+      color: #fff;
+      box-shadow: 0 8px 18px rgba(100, 132, 104, 0.25);
+    }
+
+    .top-actions { display: flex; align-items: center; gap: 10px; }
+
+    .profile-shortcut {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 5px 10px 5px 5px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: var(--surface);
+      color: var(--text);
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .top-avatar {
+      width: 32px;
+      height: 32px;
+      overflow: hidden;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      color: #fff;
+      background: var(--green);
+      font-weight: 700;
+    }
+
+    .top-avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+    .role-chip {
+      padding: 7px 12px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: var(--surface);
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .logout-btn {
+      padding: 9px 14px;
+      border: 0;
+      border-radius: 10px;
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+    }
+
+    .logout-btn:hover { background: #eee5da; color: var(--text); }
+
+    main {
+      width: min(1180px, calc(100% - 40px));
+      margin: 0 auto;
+      padding: 42px 0 60px;
+    }
+
+    .hero {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 24px;
+      margin-bottom: 26px;
+    }
+
+    .eyebrow {
+      margin: 0 0 5px;
+      color: var(--green-dark);
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .hero h1 {
+      margin: 0;
+      font-size: clamp(28px, 5vw, 44px);
+      line-height: 1.25;
+    }
+
+    .hero p { margin: 8px 0 0; color: var(--muted); }
+
+    .primary-action {
+      flex: 0 0 auto;
+      padding: 12px 18px;
+      border-radius: 12px;
+      background: var(--green);
+      color: #fff;
+      text-decoration: none;
+      font-weight: 600;
+      box-shadow: 0 10px 22px rgba(100, 132, 104, 0.22);
+      transition: 0.2s ease;
+    }
+
+    .primary-action:hover { transform: translateY(-2px); background: var(--green-dark); }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 16px;
+      margin-bottom: 22px;
+    }
+
+    .stat-card {
+      position: relative;
+      overflow: hidden;
+      min-height: 140px;
+      padding: 20px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: var(--surface);
+      box-shadow: var(--shadow);
+    }
+
+    .stat-card::after {
+      position: absolute;
+      right: -22px;
+      bottom: -30px;
+      width: 90px;
+      height: 90px;
+      border-radius: 50%;
+      background: var(--accent, var(--sand));
+      content: '';
+      opacity: 0.11;
+    }
+
+    .stat-label { color: var(--muted); font-size: 14px; }
+    .stat-value { margin: 8px 0 2px; font-size: 34px; font-weight: 700; line-height: 1; }
+    .stat-note { color: var(--muted); font-size: 12px; }
+
+    .content-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.65fr) minmax(280px, 0.75fr);
+      gap: 22px;
+    }
+
+    .panel {
+      padding: 24px;
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      background: var(--surface);
+      box-shadow: var(--shadow);
+    }
+
+    .panel-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+
+    .panel h2 { margin: 0; font-size: 19px; }
+    .panel-link { color: var(--green-dark); text-decoration: none; font-size: 14px; font-weight: 600; }
+
+    .project-list { display: grid; gap: 12px; }
+
+    .project-item {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 16px;
+      padding: 16px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: var(--surface-soft);
+      color: inherit;
+      text-decoration: none;
+      transition: 0.2s ease;
+    }
+
+    .project-item:hover { border-color: #c9b8a4; transform: translateY(-1px); }
+    .project-title { overflow: hidden; margin-bottom: 5px; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
+    .project-meta { color: var(--muted); font-size: 13px; }
+
+    .project-deadlines { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+    .deadline-pill { padding: 4px 8px; border-radius: 999px; color: #765c24; background: #fff1cf; font-size: 11px; font-weight: 600; }
+    .deadline-pill.competition { color: #855530; background: #f8e5d2; }
+    .deadline-pill.overdue { color: #9d4037; background: #f9e4e1; }
+    .deadline-pill.unset { color: #75675b; background: #eee8df; }
+
+    .status {
+      align-self: start;
+      padding: 5px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .status.pending { background: #fff1d8; color: #8c621e; }
+    .status.approved { background: #e4f1e5; color: #3d7044; }
+    .status.rejected { background: #f9e4e1; color: #9d4037; }
+
+    .progress-line {
+      width: 100%;
+      height: 6px;
+      margin-top: 10px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: #e9e1d8;
+    }
+
+    .progress-line span { display: block; height: 100%; border-radius: inherit; background: var(--green); }
+
+    .project-progress-summary {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .project-progress-summary strong {
+      color: var(--green-dark);
+      font-size: 14px;
+    }
+
+    .project-progress-summary + .progress-line { margin-top: 6px; }
+
+    .side-stack { display: grid; align-content: start; gap: 22px; }
+    .quick-links { display: grid; gap: 10px; }
+
+    .quick-link {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 13px;
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      color: var(--text);
+      text-decoration: none;
+      transition: 0.2s ease;
+    }
+
+    .quick-link:hover { padding-left: 17px; border-color: #c9b8a4; background: var(--surface-soft); }
+
+    .learning-quick-link { display: grid; grid-template-columns: 36px minmax(0, 1fr) auto; }
+    .learning-quick-copy { min-width: 0; }
+    .learning-quick-meta { color: var(--muted); font-size: 12px; }
+    .learning-quick-percent { align-self: start; color: var(--green-dark); font-size: 18px; font-weight: 800; }
+    .learning-quick-track { height: 5px; margin-top: 8px; overflow: hidden; border-radius: 999px; background: #e8e1d8; }
+    .learning-quick-track span { display: block; width: 0; height: 100%; border-radius: inherit; background: var(--green); transition: width .3s ease; }
+
+    .quick-icon {
+      display: grid;
+      width: 36px;
+      height: 36px;
+      place-items: center;
+      border-radius: 10px;
+      background: #eee5da;
+    }
+
+    .overview-row { margin-bottom: 15px; }
+    .overview-row:last-child { margin-bottom: 0; }
+    .overview-label { display: flex; justify-content: space-between; margin-bottom: 7px; color: var(--muted); font-size: 13px; }
+    .overview-bar { height: 8px; overflow: hidden; border-radius: 999px; background: #eee7de; }
+    .overview-bar span { display: block; height: 100%; border-radius: inherit; }
+
+    .empty-state { padding: 38px 18px; border: 1px dashed #d7cabc; border-radius: 14px; color: var(--muted); text-align: center; }
+
+    .loading {
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+      display: grid;
+      place-items: center;
+      background: var(--bg);
+      color: var(--muted);
+    }
+
+    .loading.hidden { display: none; }
+
+    @media (max-width: 900px) {
+      .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .content-grid { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 600px) {
+      .topbar { padding: 13px 18px; }
+      .role-chip { display: none; }
+      .profile-shortcut > span:last-child { display: none; }
+      .profile-shortcut { padding: 4px; }
+      main { width: min(100% - 28px, 1180px); padding-top: 28px; }
+      .hero { align-items: stretch; flex-direction: column; }
+      .primary-action { text-align: center; }
+      .stats { grid-template-columns: 1fr 1fr; gap: 10px; }
+      .stat-card { min-height: 120px; padding: 16px; }
+      .stat-value { font-size: 29px; }
+      .panel { padding: 18px; }
+      .project-item { grid-template-columns: 1fr; gap: 9px; }
+      .status { justify-self: start; }
+    }
+  </style>
+  <link rel="stylesheet" href="trackpro-theme.css">
+</head>
+<body class="page-dashboard">
+  <div id="loading" class="loading" role="status">กำลังเตรียม Dashboard...</div>
+
+  <header class="topbar">
+    <a class="brand" href="dashboard.html" aria-label="TrackPro Dashboard">
+      <span class="brand-mark" aria-hidden="true">🎓</span>
+      <span>TrackPro</span>
+    </a>
+    <div class="top-actions">
+      <span id="roleChip" class="role-chip">กำลังโหลด...</span>
+      <a class="profile-shortcut" href="profile.html" aria-label="แก้ไขข้อมูลส่วนตัว">
+        <span id="topAvatar" class="top-avatar"><img id="topAvatarImage" alt="" hidden><span id="topAvatarFallback">ผ</span></span>
+        <span>ข้อมูลส่วนตัว</span>
+      </a>
+      <button class="logout-btn" type="button" onclick="logout()">ออกจากระบบ</button>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero" aria-labelledby="welcomeTitle">
+      <div>
+        <p id="dateLabel" class="eyebrow"></p>
+        <h1 id="welcomeTitle">สวัสดี</h1>
+        <p id="welcomeText">ติดตามทุกโครงงานได้จากที่เดียว</p>
+      </div>
+      <a id="primaryAction" class="primary-action" href="addProject.html">+ เพิ่มโครงงานใหม่</a>
+    </section>
+
+    <section class="stats" aria-label="สรุปข้อมูลโครงงาน">
+      <article class="stat-card" style="--accent: var(--sand)">
+        <div id="totalLabel" class="stat-label">โครงงานทั้งหมด</div>
+        <div id="totalCount" class="stat-value">0</div>
+        <div class="stat-note">รายการที่เกี่ยวข้องกับคุณ</div>
+      </article>
+      <article class="stat-card" style="--accent: var(--amber)">
+        <div id="pendingLabel" class="stat-label">รออนุมัติ</div>
+        <div id="pendingCount" class="stat-value">0</div>
+        <div class="stat-note">รายการที่กำลังดำเนินการ</div>
+      </article>
+      <article class="stat-card" style="--accent: var(--green)">
+        <div class="stat-label">อนุมัติแล้ว</div>
+        <div id="approvedCount" class="stat-value">0</div>
+        <div class="stat-note">รายการที่ผ่านการตรวจ</div>
+      </article>
+      <article class="stat-card" style="--accent: var(--red)">
+        <div class="stat-label">ความคืบหน้าเฉลี่ย</div>
+        <div id="progressAverage" class="stat-value">0%</div>
+        <div class="stat-note">คำนวณจากโครงงานทั้งหมด</div>
+      </article>
+    </section>
+
+    <section class="content-grid">
+      <article class="panel">
+        <div class="panel-head">
+          <h2>โครงงานล่าสุด</h2>
+          <a id="allProjectsLink" class="panel-link" href="leaderProjects.html">ดูหน้าหัวหน้ากลุ่ม →</a>
+        </div>
+        <div id="recentProjects" class="project-list"></div>
+      </article>
+
+      <aside class="side-stack">
+        <section class="panel">
+          <div class="panel-head"><h2>เมนูลัด</h2></div>
+          <nav id="quickLinks" class="quick-links" aria-label="เมนูลัด"></nav>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head"><h2>ภาพรวมสถานะ</h2></div>
+          <div id="statusOverview"></div>
+        </section>
+      </aside>
+    </section>
+  </main>
+
+  <script>
+    const SUPABASE_URL = 'https://klszrjhdpvsiktddzpga.supabase.co'
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtsc3pyamhkcHZzaWt0ZGR6cGdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE1MDMzODMsImV4cCI6MjA4NzA3OTM4M30.zcK4gseuAMxweSWEGWYSuUcPui0EJgOcE66XsKw6wUM'
+    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+
+    let currentRole = ''
+
+    init()
+
+    async function init() {
+      try {
+        const { data: { user }, error: authError } = await sb.auth.getUser()
+        if (authError || !user) {
+          location.href = 'index.html'
+          return
+        }
+
+        const { data: profile, error: profileError } = await sb
+          .from('profiles')
+          .select('first_name, last_name, role, grade, no, avatar_path')
+          .eq('id', user.id)
+          .single()
+
+        if (profile?.role === 'admin') {
+          location.href = 'admin.html'
+          return
+        }
+
+        if (profileError || !profile || !['student', 'teacher'].includes(profile.role)) {
+          throw new Error('ไม่พบข้อมูลผู้ใช้งานสำหรับ Dashboard')
+        }
+
+        currentRole = profile.role
+        renderProfile(profile)
+        if (profile.role === 'student') loadStudentLearningSummary(user.id)
+
+        const projects = profile.role === 'teacher'
+          ? await loadTeacherProjects(profile)
+          : await loadStudentProjects(user.id)
+
+        renderDashboard(projects)
+      } catch (error) {
+        console.error(error)
+        alert(error.message || 'โหลด Dashboard ไม่สำเร็จ กรุณาลองใหม่อีกครั้ง')
+      } finally {
+        document.getElementById('loading').classList.add('hidden')
+      }
+    }
+
+    function renderProfile(profile) {
+      const fullName = `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'ผู้ใช้งาน'
+      const isTeacher = profile.role === 'teacher'
+
+      document.getElementById('dateLabel').textContent = new Intl.DateTimeFormat('th-TH', {
+        weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+      }).format(new Date())
+      document.getElementById('welcomeTitle').textContent = `สวัสดี, ${fullName}`
+      renderTopAvatar(profile.avatar_path, fullName)
+      document.getElementById('welcomeText').textContent = isTeacher
+        ? 'ตรวจสอบและติดตามความคืบหน้าโครงงานที่คุณดูแล'
+        : `ติดตามโครงงานของคุณ${profile.grade ? ` • ชั้น ${profile.grade}` : ''}`
+      document.getElementById('roleChip').textContent = isTeacher ? 'บัญชีครูที่ปรึกษา' : 'บัญชีนักเรียน'
+      document.getElementById('totalLabel').textContent = isTeacher ? 'โครงงานที่ดูแล' : 'เป็นหัวหน้ากลุ่ม'
+      document.getElementById('pendingLabel').textContent = isTeacher ? 'รออนุมัติ' : 'เป็นสมาชิกกลุ่ม'
+
+      const primary = document.getElementById('primaryAction')
+      primary.href = isTeacher ? 'teacher.html' : 'addProject.html'
+      primary.textContent = isTeacher ? 'ตรวจโครงงานที่รออนุมัติ' : '+ เพิ่มโครงงานใหม่'
+
+      const allLink = document.getElementById('allProjectsLink')
+      allLink.href = isTeacher ? 'teacher.html' : 'leaderProjects.html'
+      allLink.textContent = isTeacher ? 'ดูโครงงานที่ดูแลทั้งหมด →' : 'ดูหน้าหัวหน้ากลุ่ม →'
+
+      document.getElementById('quickLinks').innerHTML = isTeacher
+        ? quickLink('profile.html', '👤', 'ข้อมูลส่วนตัว', 'แก้ไขข้อมูลและรูปประจำตัว') +
+          quickLink('teacher.html', '🗂️', 'ตรวจโครงงาน', 'อนุมัติหรือปฏิเสธโครงงาน') +
+          quickLink('teacherLearning.html', '📊', 'ความคืบหน้าการเรียน', 'ติดตามนักเรียนในโครงงานที่ดูแล') +
+          quickLink('allProject.html', '📚', 'โครงงานทั้งหมด', 'ดูโครงงานในระบบ') +
+          quickLink('community.html', '💬', 'กระดานชุมชน', 'ติดตามข่าวสารและกิจกรรม')
+        : quickLink('profile.html', '👤', 'ข้อมูลส่วนตัว', 'แก้ไขข้อมูลและรูปประจำตัว') +
+          learningQuickLink() +
+          quickLink('leaderProjects.html', '👑', 'ฉันเป็นหัวหน้ากลุ่ม', 'สร้าง แก้ไข และจัดการสมาชิก') +
+          quickLink('memberProjects.html', '🤝', 'ฉันเป็นสมาชิกกลุ่ม', 'ติดตามโครงงานของทีม') +
+          quickLink('community.html', '💬', 'กระดานชุมชน', 'ติดตามข่าวสารและกิจกรรม')
+    }
+
+    function renderTopAvatar(path, fullName) {
+      const image = document.getElementById('topAvatarImage')
+      const fallback = document.getElementById('topAvatarFallback')
+      fallback.textContent = (fullName || 'ผ').charAt(0).toUpperCase()
+      if (!path) {
+        image.hidden = true
+        fallback.hidden = false
+        return
+      }
+      const { data } = sb.storage.from('avatars').getPublicUrl(path)
+      image.src = data.publicUrl
+      image.hidden = false
+      fallback.hidden = true
+      image.onerror = () => {
+        image.hidden = true
+        fallback.hidden = false
+      }
+    }
+
+    async function loadTeacherProjects(profile) {
+      const teacherName = `${profile.first_name || ''} ${profile.last_name || ''}`.trim()
+      const { data, error } = await sb
+        .from('student_projects')
+        .select('*')
+        .eq('advisor', teacherName)
+        .order('created_at', { ascending: false })
+
+      if (error) throw error
+      return data || []
+    }
+
+    async function loadStudentProjects(userId) {
+      const [ownResult, memberResult] = await Promise.all([
+        sb.from('student_projects').select('*').eq('student_id', userId).order('created_at', { ascending: false }),
+        sb.from('project_member').select('student_projects (*)').eq('student_id', userId)
+      ])
+
+      if (ownResult.error) throw ownResult.error
+      if (memberResult.error) throw memberResult.error
+
+      const uniqueProjects = new Map()
+      ;(ownResult.data || []).forEach(project => uniqueProjects.set(project.id, { ...project, groupRole: 'leader' }))
+      ;(memberResult.data || []).forEach(row => {
+        if (row.student_projects && !uniqueProjects.has(row.student_projects.id)) {
+          uniqueProjects.set(row.student_projects.id, { ...row.student_projects, groupRole: 'member' })
+        }
+      })
+
+      return Array.from(uniqueProjects.values()).sort((a, b) =>
+        new Date(b.created_at || 0) - new Date(a.created_at || 0)
+      )
+    }
+
+    async function loadStudentLearningSummary(userId) {
+      const [lessonResult, progressResult] = await Promise.all([
+        sb.from('learning_lessons').select('id, duration_seconds').eq('is_published', true),
+        sb.from('learning_progress').select('lesson_id, watched_seconds, completed').eq('student_id', userId)
+      ])
+
+      if (lessonResult.error || progressResult.error) {
+        console.error(lessonResult.error || progressResult.error)
+        return
+      }
+
+      const lessons = lessonResult.data || []
+      const progressMap = new Map((progressResult.data || []).map(item => [item.lesson_id, item]))
+      const totalSeconds = lessons.reduce((sum, lesson) => sum + (Number(lesson.duration_seconds) || 0), 0)
+      const watchedSeconds = lessons.reduce((sum, lesson) => {
+        const watched = Number(progressMap.get(lesson.id)?.watched_seconds) || 0
+        return sum + Math.min(watched, Number(lesson.duration_seconds) || 0)
+      }, 0)
+      const completedCount = lessons.filter(lesson => progressMap.get(lesson.id)?.completed).length
+      const percent = totalSeconds ? Math.min(100, Math.round(watchedSeconds * 100 / totalSeconds)) : 0
+
+      document.getElementById('learningQuickPercent').textContent = `${percent}%`
+      document.getElementById('learningQuickMeta').textContent = `สำเร็จ ${completedCount}/${lessons.length} บท`
+      document.getElementById('learningQuickProgressBar').style.width = `${percent}%`
+      document.querySelector('.learning-quick-link').setAttribute('aria-label', `การเรียนรู้ สำเร็จ ${percent} เปอร์เซ็นต์`)
+    }
+
+    function renderDashboard(projects) {
+      const counts = {
+        pending: projects.filter(project => (project.status || 'pending') === 'pending').length,
+        approved: projects.filter(project => project.status === 'approved').length,
+        rejected: projects.filter(project => project.status === 'rejected').length
+      }
+      const average = projects.length
+        ? Math.round(projects.reduce((sum, project) => sum + clampProgress(project.progress), 0) / projects.length)
+        : 0
+
+      const leaderCount = projects.filter(project => project.groupRole === 'leader').length
+      const memberCount = projects.filter(project => project.groupRole === 'member').length
+
+      document.getElementById('totalCount').textContent = currentRole === 'student' ? leaderCount : projects.length
+      document.getElementById('pendingCount').textContent = currentRole === 'student' ? memberCount : counts.pending
+      document.getElementById('approvedCount').textContent = counts.approved
+      document.getElementById('progressAverage').textContent = `${average}%`
+
+      renderRecentProjects(projects.slice(0, 5))
+      renderStatusOverview(counts, projects.length)
+    }
+
+    function renderRecentProjects(projects) {
+      const container = document.getElementById('recentProjects')
+      if (!projects.length) {
+        container.innerHTML = '<div class="empty-state">ยังไม่มีโครงงานในขณะนี้</div>'
+        return
+      }
+
+      container.innerHTML = projects.map(project => {
+        const status = normalizeStatus(project.status)
+        const progress = clampProgress(project.progress)
+        const href = `projectDetail.html?id=${encodeURIComponent(project.id)}`
+
+        return `
+          <a class="project-item ${status}" href="${href}">
+            <div>
+              <div class="project-title">${escapeHtml(project.title || 'ไม่มีชื่อโครงงาน')}</div>
+              <div class="project-meta">${escapeHtml(project.category || 'ไม่ระบุหมวดหมู่')} • ${escapeHtml(project.student_name || 'ไม่ระบุผู้จัดทำ')}${currentRole === 'student' ? ` • ${project.groupRole === 'leader' ? 'หัวหน้ากลุ่ม' : 'สมาชิกกลุ่ม'}` : ''}</div>
+              ${dashboardDeadlinePills(project)}
+              <div class="project-progress-summary"><span>ความสำเร็จของโครงงาน</span><strong>${progress}%</strong></div>
+              <div class="progress-line" aria-label="ความคืบหน้า ${progress}%"><span style="width:${progress}%"></span></div>
+            </div>
+            <span class="status ${status}">${statusLabel(status)}</span>
+          </a>
+        `
+      }).join('')
+    }
+
+    function dashboardDeadlinePills(project) {
+      const items = []
+      if (project.proposal_due_date) {
+        items.push(`<span class="deadline-pill ${dashboardDeadlineClass(project.proposal_due_date)}">📝 ส่งข้อเสนอ ${formatDashboardDate(project.proposal_due_date)}</span>`)
+      } else {
+        items.push('<span class="deadline-pill unset">📝 ยังไม่กำหนดวันส่งข้อเสนอ</span>')
+      }
+      if (project.competition_due_date) items.push(`<span class="deadline-pill competition ${dashboardDeadlineClass(project.competition_due_date)}">🏆 ${escapeHtml(project.competition_name || 'ส่งแข่งขัน')} ${formatDashboardDate(project.competition_due_date)}</span>`)
+      return `<div class="project-deadlines">${items.join('')}</div>`
+    }
+
+    function dashboardDeadlineClass(dateValue) {
+      const today = new Date()
+      const todayValue = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
+      return dateValue < todayValue ? 'overdue' : ''
+    }
+
+    function formatDashboardDate(dateValue) {
+      return new Intl.DateTimeFormat('th-TH', { day: 'numeric', month: 'short', year: '2-digit' }).format(new Date(`${dateValue}T00:00:00`))
+    }
+
+    function renderStatusOverview(counts, total) {
+      const rows = [
+        ['approved', 'อนุมัติแล้ว', counts.approved, '#648468'],
+        ['pending', 'รออนุมัติ', counts.pending, '#c48b3f'],
+        ['rejected', 'ไม่ผ่าน', counts.rejected, '#bd5b50']
+      ]
+
+      document.getElementById('statusOverview').innerHTML = rows.map(([, label, count, color]) => {
+        const percent = total ? Math.round(count * 100 / total) : 0
+        return `
+          <div class="overview-row">
+            <div class="overview-label"><span>${label}</span><strong>${count} (${percent}%)</strong></div>
+            <div class="overview-bar"><span style="width:${percent}%; background:${color}"></span></div>
+          </div>
+        `
+      }).join('')
+    }
+
+    function quickLink(href, icon, title, description) {
+      return `
+        <a class="quick-link" href="${href}">
+          <span class="quick-icon" aria-hidden="true">${icon}</span>
+          <span><strong>${title}</strong><br><small style="color:var(--muted)">${description}</small></span>
+        </a>
+      `
+    }
+
+    function learningQuickLink() {
+      return `
+        <a class="quick-link learning-quick-link" href="learning.html" aria-label="การเรียนรู้ กำลังโหลดความคืบหน้า">
+          <span class="quick-icon" aria-hidden="true">🎓</span>
+          <span class="learning-quick-copy">
+            <strong>การเรียนรู้</strong><br>
+            <span id="learningQuickMeta" class="learning-quick-meta">กำลังโหลดความคืบหน้า...</span>
+            <span class="learning-quick-track"><span id="learningQuickProgressBar"></span></span>
+          </span>
+          <strong id="learningQuickPercent" class="learning-quick-percent">0%</strong>
+        </a>
+      `
+    }
+
+    function normalizeStatus(status) {
+      return ['approved', 'rejected'].includes(status) ? status : 'pending'
+    }
+
+    function statusLabel(status) {
+      if (status === 'approved') return 'อนุมัติแล้ว'
+      if (status === 'rejected') return 'ไม่ผ่าน'
+      return 'รออนุมัติ'
+    }
+
+    function clampProgress(value) {
+      const number = Number(value)
+      if (!Number.isFinite(number)) return 0
+      return Math.min(100, Math.max(0, number))
+    }
+
+    function escapeHtml(value) {
+      const element = document.createElement('div')
+      element.textContent = String(value)
+      return element.innerHTML
+    }
+
+    async function logout() {
+      await sb.auth.signOut()
+      location.href = 'index.html'
+    }
+  </script>
+</body>
+</html>

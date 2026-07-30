@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ข้อมูลส่วนตัว | TrackPro</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="profile.css?v=20260730-1">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+  <div id="pageLoading" class="page-state">กำลังโหลดข้อมูลส่วนตัว...</div>
+  <div id="pageError" class="page-state error" hidden>
+    <strong>เปิดข้อมูลส่วนตัวไม่สำเร็จ</strong>
+    <p id="pageErrorText">กรุณาลองใหม่อีกครั้ง</p>
+    <a href="dashboard.html">กลับ Dashboard</a>
+  </div>
+
+  <div id="profilePage" hidden>
+    <header class="profile-topbar">
+      <a class="brand" href="dashboard.html"><span aria-hidden="true">✦</span><strong>TrackPro</strong></a>
+      <a class="back-link" href="dashboard.html">← กลับ Dashboard</a>
+    </header>
+
+    <main class="profile-main">
+      <section class="profile-heading">
+        <div><p>MY PROFILE</p><h1>ข้อมูลส่วนตัว</h1><span>แก้ไขข้อมูลและรูปประจำตัวของคุณ</span></div>
+        <span id="roleBadge" class="role-badge">บัญชีผู้ใช้งาน</span>
+      </section>
+
+      <form id="profileForm" class="profile-layout">
+        <aside class="avatar-card">
+          <div id="avatarPreview" class="avatar-preview" aria-label="รูปประจำตัว">
+            <img id="avatarImage" alt="รูปประจำตัว" hidden>
+            <span id="avatarFallback">ผ</span>
+          </div>
+          <h2 id="previewName">ผู้ใช้งาน</h2>
+          <p id="previewRole">กำลังโหลด...</p>
+          <label class="upload-button" for="avatarInput">เลือกรูปประจำตัว</label>
+          <input id="avatarInput" type="file" accept="image/jpeg,image/png,image/webp" hidden>
+          <button id="removeAvatar" class="remove-avatar" type="button">ลบรูปปัจจุบัน</button>
+          <small>รองรับ JPG, PNG หรือ WebP ขนาดไม่เกิน 5 MB</small>
+        </aside>
+
+        <section class="form-card">
+          <div class="section-title"><h2>รายละเอียดบัญชี</h2><p>ข้อมูลนี้จะแสดงในโครงงานและพื้นที่การเรียนรู้</p></div>
+
+          <div class="form-grid">
+            <label><span>ชื่อ</span><input id="firstName" type="text" maxlength="100" required></label>
+            <label><span>นามสกุล</span><input id="lastName" type="text" maxlength="100" required></label>
+            <label class="full-field"><span>อีเมล</span><input id="email" type="email" disabled><small>ไม่สามารถเปลี่ยนอีเมลจากหน้านี้ได้</small></label>
+            <label><span>เบอร์โทรศัพท์ <em>(ไม่บังคับ)</em></span><input id="phone" type="tel" maxlength="30" placeholder="เช่น 0812345678"></label>
+            <div id="studentFields" class="student-fields">
+              <label><span>ชั้น</span><input id="grade" type="text" maxlength="30" placeholder="เช่น ม.5/1"></label>
+              <label><span>เลขที่</span><input id="studentNo" type="number" min="1" max="999" inputmode="numeric"></label>
+            </div>
+            <label class="full-field"><span>แนะนำตัว <em>(ไม่บังคับ)</em></span><textarea id="bio" rows="5" maxlength="500" placeholder="เขียนข้อมูลแนะนำตัวสั้น ๆ"></textarea><small><span id="bioCount">0</span>/500 ตัวอักษร</small></label>
+          </div>
+
+          <div class="form-actions">
+            <a href="dashboard.html">ยกเลิก</a>
+            <button id="saveButton" type="submit">บันทึกข้อมูล</button>
+          </div>
+        </section>
+      </form>
+    </main>
+  </div>
+
+  <div id="toast" class="toast" role="status"></div>
+  <script src="profile.js?v=20260730-1"></script>
+</body>
+</html>

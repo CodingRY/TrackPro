@@ -2,6 +2,7 @@
 <html lang="th">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>TrackPro | Login</title>
 
   <!-- Google Font -->
@@ -10,118 +11,122 @@
   <!-- Supabase v2 -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
+  <link rel="stylesheet" href="trackpro-theme.css?v=20260730-12">
+
   <style>
-    * {
-      box-sizing: border-box;
-      font-family: 'Noto Sans Thai', sans-serif;
+    .page-login {
+      min-height: 100vh;
+      color: #493f36;
+      background:
+        radial-gradient(circle at 12% 18%, rgba(111, 143, 114, .2), transparent 25rem),
+        radial-gradient(circle at 88% 82%, rgba(176, 145, 111, .18), transparent 27rem),
+        #f6f1e9 !important;
     }
 
-    body {
-      margin: 0;
-      background: #f6f1e9;
-    }
-
-    header {
-      background: #e9dfd3;
-      padding: 14px 28px;
+    .page-login header {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      width: min(1180px, calc(100% - 40px));
       display: flex;
       align-items: center;
       gap: 12px;
+      padding: 24px 0 !important;
+      transform: translateX(-50%);
     }
 
-    header img {
-      width: 42px;
-      height: 42px;
-      border-radius: 8px;
+    .page-login header a { width: 48px; height: 48px; }
+    .page-login header img { width: 48px !important; height: 48px !important; border-radius: 15px !important; }
+    .page-login header h1 { font-size: 24px !important; letter-spacing: -.02em; }
+
+    .page-login main {
+      display: grid;
+      min-height: 100vh;
+      padding: 112px 20px 46px;
+      place-items: center;
     }
 
-    header h1 {
-      font-size: 22px;
-      color: #4a3f35;
-      margin: 0;
+    .auth-shell {
+      width: min(520px, 100%);
+      display: grid;
+      grid-template-columns: 1fr;
+      overflow: hidden;
+      border: 1px solid rgba(222, 211, 197, .95);
+      border-radius: 30px;
+      background: rgba(255, 253, 249, .9);
+      box-shadow: 0 28px 70px rgba(83, 64, 47, .13);
+      backdrop-filter: blur(14px);
     }
 
-    main {
+    .page-login .card {
+      width: auto !important;
       display: flex;
+      flex-direction: column;
       justify-content: center;
-      align-items: center;
-      height: calc(100vh - 80px);
+      padding: 40px clamp(34px, 4vw, 48px) !important;
+      border: 0 !important;
+      border-radius: 0 !important;
+      background: rgba(255, 255, 255, .96) !important;
+      box-shadow: none !important;
+      text-align: left;
     }
 
-    .card {
-      background: #ffffff;
-      width: 360px;
-      padding: 28px;
-      border-radius: 18px;
-      box-shadow: 0 10px 25px rgba(0,0,0,.08);
+    .page-login .card::before { display: none !important; content: none !important; }
+    .page-login .card h2 { margin: 0 !important; font-size: 31px; letter-spacing: -.02em; }
+    .card-description { margin: 8px 0 25px; color: #887a6c; font-size: 14px; }
+
+    .auth-field { display: block; margin-bottom: 14px; }
+    .auth-field span { display: block; margin-bottom: 7px; color: #5f5348; font-size: 13px; font-weight: 700; }
+    .page-login .auth-field input {
+      width: 100%;
+      min-height: 52px;
+      margin: 0 !important;
+      padding: 13px 15px !important;
+      border-radius: 13px !important;
+    }
+
+    .page-login button {
+      width: 100%;
+      min-height: 50px;
+      margin: 0;
+      padding: 12px 16px;
+      border: 0;
+      border-radius: 13px !important;
+      cursor: pointer;
+      font-size: 15px !important;
+    }
+
+    .page-login .login { margin-top: 5px; }
+    .page-login .community { border: 1px solid #cadaca !important; background: #edf4ec !important; }
+    .page-login .guest { border: 1px solid #ead8ad !important; background: #fff7e5 !important; }
+
+    .community-actions { display: grid; gap: 10px; }
+    .community-register { color: #887a6c; font-size: 12px; text-align: center; }
+    .community-register a { color: #58705a; text-decoration: none; font-weight: 800; }
+    .community-register a:hover { text-decoration: underline; }
+    .section-divider { display: flex; align-items: center; gap: 11px; margin: 22px 0 14px; color: #998b7d; font-size: 11px; font-weight: 700; }
+    .section-divider::before, .section-divider::after { height: 1px; flex: 1; background: #e7ded2; content: ''; }
+
+    .register {
+      margin-top: 22px;
+      color: #887a6c;
+      font-size: 13px;
       text-align: center;
     }
 
-    .card h2 {
-      margin-bottom: 20px;
-      color: #4a3f35;
-    }
+    .register a { color: #58705a; text-decoration: none; font-weight: 800; }
+    .register a:hover { text-decoration: underline; }
 
-    input {
-      width: 100%;
-      padding: 12px 14px;
-      margin-bottom: 14px;
-      border-radius: 10px;
-      border: 1px solid #ddd;
-      font-size: 15px;
-    }
-
-    button {
-      width: 100%;
-      padding: 12px;
-      border-radius: 12px;
-      border: none;
-      font-size: 16px;
-      cursor: pointer;
-      margin-bottom: 10px;
-    }
-
-    .login {
-      background: #b0916f;
-      color: white;
-    }
-
-    .login:hover {
-      background: #9e7f5f;
-    }
-
-    .community {
-      background: #6f8fb0;
-      color: white;
-    }
-
-    .community:hover {
-      background: #5b7a99;
-    }
-
-    .guest {
-      background: #4caf50;
-      color: white;
-    }
-
-    .guest:hover {
-      background: #3e8e41;
-    }
-
-    .register {
-      margin-top: 14px;
-      font-size: 14px;
-    }
-
-    .register a {
-      color: #7a5c3e;
-      text-decoration: none;
-      font-weight: 600;
+    @media (max-width: 540px) {
+      .page-login header { width: calc(100% - 30px); padding-top: 16px !important; }
+      .page-login main { padding: 92px 14px 24px; }
+      .auth-shell { border-radius: 23px; }
+      .page-login .card { padding: 30px 24px 28px !important; }
     }
   </style>
 </head>
 
-<body>
+<body class="page-auth page-login">
 
 <header>
   <a href="https://pic.in.th/image/ChatGPT-Image-19-%E0%B8%81.%E0%B8%9E.-2569-19-43-40.8l04Zo"><img src="https://img1.pic.in.th/images/ChatGPT-Image-19-..-2569-19_43_40.png" alt="ChatGPT Image 19 ก.พ. 2569 19 43 40" border="0"></a>
@@ -129,19 +134,25 @@
 </header>
 
 <main>
-  <div class="card">
-    <h2>เข้าสู่ระบบ</h2>
+  <div class="auth-shell">
+    <section class="card" aria-labelledby="loginTitle">
+      <h2 id="loginTitle">เข้าสู่ระบบ TrackPro</h2>
+      <p class="card-description">กรอกข้อมูลบัญชีเพื่อเข้าสู่พื้นที่ของคุณ</p>
 
-    <input id="email" type="email" placeholder="Email">
-    <input id="password" type="password" placeholder="Password">
+      <label class="auth-field" for="email"><span>อีเมล</span><input id="email" type="email" placeholder="name@example.com" autocomplete="email"></label>
+      <label class="auth-field" for="password"><span>รหัสผ่าน</span><input id="password" type="password" placeholder="กรอกรหัสผ่าน" autocomplete="current-password"></label>
 
-    <button id="loginBtn" class="login">Login</button>
-    <button id="communityBtn" class="community">เข้าสู่ระบบในฐานะชุมชน</button>
-    <button id="guestBtn" class="guest">เข้าสู่ชุมชนแบบไม่ต้องสมัคร</button>
+      <button id="loginBtn" class="login" type="button">เข้าสู่ระบบ</button>
 
-    <div class="register">
-      ยังไม่มีบัญชี? <a href="register.html">สมัครสมาชิก</a>
-    </div>
+      <div class="section-divider"><span>สำหรับบัญชีชุมชน</span></div>
+      <div class="community-actions">
+        <button id="communityBtn" class="community" type="button">เข้าสู่ระบบในฐานะชุมชน</button>
+        <div class="community-register">ยังไม่มีบัญชีชุมชน? <a href="register.html?role=community">สมัครสมาชิกในฐานะชุมชน</a></div>
+        <button id="guestBtn" class="guest" type="button">เข้าชมกระดานชุมชนโดยไม่สมัคร</button>
+      </div>
+
+      <div class="register">ยังไม่มีบัญชี? <a href="register.html">สมัครสมาชิก</a></div>
+    </section>
   </div>
 </main>
 
@@ -159,11 +170,12 @@
   )
 
   /* ===============================
-     🔐 Login Teacher / Student
+     🔐 Login ทุกประเภทบัญชี
   =============================== */
-  document.getElementById('loginBtn').addEventListener('click', login)
+  document.getElementById('loginBtn').addEventListener('click', () => login(false))
+  document.getElementById('communityBtn').addEventListener('click', () => login(true))
 
-  async function login() {
+  async function login(communityOnly = false) {
     const email = document.getElementById('email').value.trim()
     const password = document.getElementById('password').value.trim()
 
@@ -184,50 +196,32 @@
     const { data: profile, error: profileError } =
       await sb.from('profiles').select('role').eq('id', userId).single()
 
-    if (profileError) {
-      alert('ไม่พบข้อมูล role')
+    if (profileError || !profile) {
+      await sb.auth.signOut()
+      alert('ไม่พบข้อมูลประเภทบัญชี')
       return
     }
 
-    if (profile.role === 'teacher') {
-      window.location.href = 'teacher.html'
+    if (communityOnly && profile.role !== 'community') {
+      await sb.auth.signOut()
+      alert('บัญชีนี้ไม่ใช่บัญชีชุมชน')
+      return
+    }
+
+    localStorage.removeItem('guest_login')
+    localStorage.setItem('role', profile.role)
+
+    if (profile.role === 'admin') {
+      window.location.href = 'admin.html'
+    } else if (profile.role === 'teacher') {
+      window.location.href = 'dashboard.html'
     } else if (profile.role === 'student') {
-      window.location.href = 'student.html'
-    } else {
-      alert('บัญชีนี้ไม่ใช่ครูหรือนักเรียน')
-    }
-  }
-
-  /* ===============================
-     🌍 Login Community (มีบัญชี)
-  =============================== */
-  document.getElementById('communityBtn').addEventListener('click', loginCommunity)
-
-  async function loginCommunity() {
-    const email = document.getElementById('email').value.trim()
-    const password = document.getElementById('password').value.trim()
-
-    if (!email || !password) {
-      alert('กรุณากรอก Email และ Password')
-      return
-    }
-
-    const { data, error } = await sb.auth.signInWithPassword({ email, password })
-
-    if (error) {
-      alert(error.message)
-      return
-    }
-
-    const userId = data.user.id
-
-    const { data: profile } =
-      await sb.from('profiles').select('role').eq('id', userId).single()
-
-    if (profile.role === 'community') {
+      window.location.href = 'dashboard.html'
+    } else if (profile.role === 'community') {
       window.location.href = 'community.html'
     } else {
-      alert('บัญชีนี้ไม่ใช่บัญชีชุมชน')
+      await sb.auth.signOut()
+      alert('ไม่พบประเภทบัญชีที่รองรับ')
     }
   }
 

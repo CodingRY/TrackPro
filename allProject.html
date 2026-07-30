@@ -2,6 +2,7 @@
 <html lang="th">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>TrackPro | โครงงานทั้งหมด</title>
 
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;600&display=swap" rel="stylesheet">
@@ -42,6 +43,38 @@
       grid-template-columns:repeat(auto-fill,minmax(320px,1fr));
       gap:20px;
     }
+
+    .project-filters {
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:18px;
+      margin-bottom:22px;
+      padding:16px 18px;
+      border:1px solid #ded3c5;
+      border-radius:16px;
+      background:#fff;
+      box-shadow:0 8px 20px rgba(75,58,44,.06);
+    }
+
+    .filter-heading strong, .filter-heading span { display:block; }
+    .filter-heading strong { font-size:15px; }
+    .filter-heading span { margin-top:2px; color:#7a6a58; font-size:12px; }
+
+    .status-filters { display:flex; flex-wrap:wrap; justify-content:flex-end; gap:8px; }
+    .status-filter {
+      padding:8px 12px;
+      border:1px solid #d9cec0;
+      border-radius:999px;
+      background:#f8f4ee;
+      color:#695b50;
+      cursor:pointer;
+      font-size:13px;
+    }
+    .status-filter span { display:inline-grid; min-width:22px; margin-left:4px; padding:1px 6px; place-items:center; border-radius:999px; background:rgba(255,255,255,.75); font-size:11px; }
+    .status-filter:hover { border-color:#98ad98; background:#eef4ec; }
+    .status-filter.active { border-color:#6f8f72; background:#6f8f72; color:#fff; }
+    .status-filter:focus-visible { outline:3px solid rgba(111,143,114,.25); outline-offset:2px; }
 
     .project-card {
       background:#fff;
@@ -101,6 +134,12 @@
       margin-top:8px;
     }
 
+    .project-deadlines { display:flex; flex-wrap:wrap; gap:7px; margin-top:12px; }
+    .deadline-pill { padding:5px 9px; border-radius:999px; background:#fff1cf; color:#765c24; font-size:12px; font-weight:600; }
+    .deadline-pill.competition { background:#f8e5d2; color:#855530; }
+    .deadline-pill.overdue { background:#f9e4e1; color:#9d4037; }
+    .deadline-pill.unset { background:#eee8df; color:#75675b; }
+
     .reject-message {
       margin-top:10px;
       padding:8px 12px;
@@ -116,17 +155,35 @@
       color:#777;
       margin-top:60px;
     }
+
+    @media (max-width:700px) {
+      .project-filters { align-items:stretch; flex-direction:column; }
+      .status-filters { justify-content:flex-start; }
+    }
   </style>
+  <link rel="stylesheet" href="trackpro-theme.css">
 </head>
 
-<body>
+<body class="page-gallery">
 
 <header>
-  <h1>📚 โครงงานทั้งหมด</h1>
-  <a href="index.html">← กลับหน้าหลัก</a>
+  <h1>โครงงานทั้งหมด</h1>
+  <a id="backHomeLink" href="index.html">← กลับหน้าหลัก</a>
 </header>
 
 <div class="container">
+  <section class="project-filters" aria-label="ตัวกรองสถานะโครงงาน">
+    <div class="filter-heading">
+      <strong>กรองตามสถานะ</strong>
+      <span id="filterSummary">กำลังโหลดโครงงาน...</span>
+    </div>
+    <div class="status-filters" role="group" aria-label="เลือกสถานะโครงงาน">
+      <button class="status-filter active" type="button" data-status-filter="all" aria-pressed="true">ทั้งหมด <span id="allCount">0</span></button>
+      <button class="status-filter" type="button" data-status-filter="approved" aria-pressed="false">อนุมัติแล้ว <span id="approvedCount">0</span></button>
+      <button class="status-filter" type="button" data-status-filter="unapproved" aria-pressed="false">ยังไม่อนุมัติ <span id="unapprovedCount">0</span></button>
+      <button class="status-filter" type="button" data-status-filter="rejected" aria-pressed="false">ไม่ผ่านการอนุมัติ <span id="rejectedCount">0</span></button>
+    </div>
+  </section>
   <div id="projectGrid" class="grid"></div>
   <div id="empty" class="empty" style="display:none;">
     ยังไม่มีโครงงานในระบบ
@@ -138,8 +195,55 @@
   const SUPABASE_URL = 'https://klszrjhdpvsiktddzpga.supabase.co'
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtsc3pyamhkcHZzaWt0ZGR6cGdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE1MDMzODMsImV4cCI6MjA4NzA3OTM4M30.zcK4gseuAMxweSWEGWYSuUcPui0EJgOcE66XsKw6wUM'
   const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+  let allProjects = []
+  let activeStatusFilter = 'all'
+
+  const backHomeLink = document.getElementById('backHomeLink')
+  const homeLinkReady = setHomeLink()
+  backHomeLink.addEventListener('click', async event => {
+    event.preventDefault()
+    await homeLinkReady
+    location.href = backHomeLink.href
+  })
+  document.querySelectorAll('[data-status-filter]').forEach(button => {
+    button.addEventListener('click', () => {
+      activeStatusFilter = button.dataset.statusFilter
+      document.querySelectorAll('[data-status-filter]').forEach(filterButton => {
+        const isActive = filterButton === button
+        filterButton.classList.toggle('active', isActive)
+        filterButton.setAttribute('aria-pressed', String(isActive))
+      })
+      renderProjects()
+    })
+  })
 
   loadProjects()
+
+  async function setHomeLink() {
+    const { data: { user } } = await sb.auth.getUser()
+
+    if (!user) {
+      if (localStorage.getItem('guest_login') === 'true') {
+        backHomeLink.href = 'community.html'
+      }
+      return
+    }
+
+    const { data: profile } = await sb
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single()
+
+    const homeByRole = {
+      admin: 'admin.html',
+      teacher: 'dashboard.html',
+      student: 'dashboard.html',
+      community: 'community.html'
+    }
+
+    backHomeLink.href = homeByRole[profile?.role] || 'dashboard.html'
+  }
 
   async function loadProjects() {
     const { data, error } = await sb
@@ -153,16 +257,51 @@
       return
     }
 
-    const grid = document.getElementById('projectGrid')
-    grid.innerHTML = ''
+    allProjects = data || []
+    updateFilterCounts()
+    renderProjects()
+  }
 
-    if (!data || data.length === 0) {
-      document.getElementById('empty').style.display = 'block'
+  function updateFilterCounts() {
+    const approvedCount = allProjects.filter(project => normalizeStatus(project.status) === 'approved').length
+    const pendingCount = allProjects.filter(project => normalizeStatus(project.status) === 'pending').length
+    const rejectedCount = allProjects.filter(project => normalizeStatus(project.status) === 'rejected').length
+    document.getElementById('allCount').textContent = allProjects.length
+    document.getElementById('approvedCount').textContent = approvedCount
+    document.getElementById('unapprovedCount').textContent = pendingCount
+    document.getElementById('rejectedCount').textContent = rejectedCount
+  }
+
+  function renderProjects() {
+    const grid = document.getElementById('projectGrid')
+    const empty = document.getElementById('empty')
+    const projects = allProjects.filter(project => {
+      const status = normalizeStatus(project.status)
+      if (activeStatusFilter === 'approved') return status === 'approved'
+      if (activeStatusFilter === 'unapproved') return status === 'pending'
+      if (activeStatusFilter === 'rejected') return status === 'rejected'
+      return true
+    })
+
+    grid.innerHTML = ''
+    document.getElementById('filterSummary').textContent = `แสดง ${projects.length} จาก ${allProjects.length} โครงงาน`
+
+    if (projects.length === 0) {
+      empty.textContent = activeStatusFilter === 'approved'
+        ? 'ยังไม่มีโครงงานที่ได้รับการอนุมัติ'
+        : activeStatusFilter === 'unapproved'
+          ? 'ไม่มีโครงงานที่กำลังรอการอนุมัติ'
+          : activeStatusFilter === 'rejected'
+            ? 'ไม่มีโครงงานที่ไม่ผ่านการอนุมัติ'
+            : 'ยังไม่มีโครงงานในระบบ'
+      empty.style.display = 'block'
       return
     }
 
-    data.forEach(p => {
-      const status = p.status ?? 'pending'
+    empty.style.display = 'none'
+
+    projects.forEach(p => {
+      const status = normalizeStatus(p.status)
 
       let statusText = '⏳ รอครูที่ปรึกษาอนุมัติ'
       let rejectMessage = ''
@@ -188,20 +327,51 @@
           ${statusText}
         </span><br>
 
-        <span class="category">${p.category || '-'}</span>
+        <span class="category">${escapeHtml(p.category || '-')}</span>
 
-        <h3>${p.title}</h3>
+        <h3>${escapeHtml(p.title || 'ไม่มีชื่อโครงงาน')}</h3>
 
-        <div class="meta">👩‍🎓 ${p.student_name || '-'}</div>
-        <div class="meta">👨‍🏫 ครูที่ปรึกษา: ${p.advisor || '-'}</div>
+        <div class="meta">👩‍🎓 ${escapeHtml(p.student_name || '-')}</div>
+        <div class="meta">👨‍🏫 ครูที่ปรึกษา: ${escapeHtml(p.advisor || '-')}</div>
 
-        <div class="desc">${p.description || ''}</div>
+        <div class="desc">${escapeHtml(p.description || '')}</div>
+        ${renderProjectDeadlines(p)}
 
         ${rejectMessage}
       `
 
       grid.appendChild(card)
     })
+  }
+
+  function normalizeStatus(status) {
+    return ['approved', 'rejected'].includes(status) ? status : 'pending'
+  }
+
+  function renderProjectDeadlines(project) {
+    const proposal = project.proposal_due_date
+      ? `<span class="deadline-pill ${deadlineClass(project.proposal_due_date)}">📝 ส่งข้อเสนอ ${formatDeadlineDate(project.proposal_due_date)}</span>`
+      : '<span class="deadline-pill unset">📝 ยังไม่กำหนดวันส่งข้อเสนอ</span>'
+    const competition = project.competition_due_date
+      ? `<span class="deadline-pill competition ${deadlineClass(project.competition_due_date)}">🏆 ${escapeHtml(project.competition_name || 'ส่งแข่งขัน')} ${formatDeadlineDate(project.competition_due_date)}</span>`
+      : ''
+    return `<div class="project-deadlines">${proposal}${competition}</div>`
+  }
+
+  function deadlineClass(dateValue) {
+    const today = new Date()
+    const todayValue = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
+    return dateValue < todayValue ? 'overdue' : ''
+  }
+
+  function formatDeadlineDate(dateValue) {
+    return new Intl.DateTimeFormat('th-TH', { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(`${dateValue}T00:00:00`))
+  }
+
+  function escapeHtml(value) {
+    const element = document.createElement('div')
+    element.textContent = String(value)
+    return element.innerHTML
   }
 </script>
 

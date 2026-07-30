@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>จัดการบทเรียน | TrackPro</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="learning.css?v=20260730-5">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+  <header class="learning-topbar">
+    <a id="brandHome" class="learning-brand" href="admin.html">
+      <span class="learning-brand-icon" aria-hidden="true">📖</span>
+      <span><strong>จัดการบทเรียน</strong><small>TrackPro Learning</small></span>
+    </a>
+    <nav class="learning-nav" aria-label="เมนูหลัก">
+      <a id="navHome" href="admin.html">หน้าหลัก</a>
+      <a class="active" href="manageLessons.html">จัดการบทเรียน</a>
+    </nav>
+    <div class="account-chip">
+      <span id="accountAvatar" class="account-avatar">ค</span>
+      <div><strong id="accountName">กำลังโหลด...</strong><small id="accountRole">ผู้ดูแลระบบ</small></div>
+    </div>
+  </header>
+
+  <main class="learning-main">
+    <div class="page-heading">
+      <div>
+        <p class="eyebrow">LESSON MANAGEMENT</p>
+        <h1>สร้างบทเรียน</h1>
+      </div>
+      <a id="backButton" class="outline-btn" href="admin.html">← กลับหน้าหลัก</a>
+    </div>
+
+    <section class="manage-layout">
+      <article class="manage-card sticky">
+        <section class="curriculum-builder" aria-labelledby="curriculumBuilderTitle">
+          <h2 id="curriculumBuilderTitle">จัดการหน่วยและหัวข้อ</h2>
+          <p class="section-note">เพิ่มหน่วยการเรียนรู้และหัวข้อก่อน แล้วจึงเลือกในบทเรียน</p>
+          <div class="catalog-form">
+            <label>ชื่อหน่วยการเรียนรู้
+              <input id="newUnitTitle" type="text" maxlength="120" placeholder="เช่น หน่วยที่ 1 พื้นฐานโครงงาน">
+            </label>
+            <label>ลำดับหน่วย
+              <input id="newUnitOrder" type="number" min="0" max="9999" step="1" value="0">
+            </label>
+            <button id="addUnitButton" class="primary-btn" type="button">+ เพิ่มหน่วย</button>
+          </div>
+          <div class="catalog-form topic-catalog-form">
+            <label class="full">หน่วยของหัวข้อ
+              <select id="topicUnitSelect"></select>
+            </label>
+            <label>ชื่อหัวข้อ
+              <input id="newTopicTitle" type="text" maxlength="120" placeholder="เช่น การเลือกปัญหา">
+            </label>
+            <label>ลำดับหัวข้อ
+              <input id="newTopicOrder" type="number" min="0" max="9999" step="1" value="0">
+            </label>
+            <button id="addTopicButton" class="primary-btn" type="button">+ เพิ่มหัวข้อ</button>
+          </div>
+        </section>
+
+        <div class="curriculum-divider"></div>
+        <h2 id="formTitle">เพิ่มบทเรียนใหม่</h2>
+        <form id="lessonForm" class="lesson-form">
+          <input id="lessonId" type="hidden">
+          <label class="full">ชื่อบทเรียน
+            <input id="lessonTitle" type="text" maxlength="160" placeholder="เช่น การวางแผนโครงงาน" required>
+          </label>
+          <label class="full">หน่วยการเรียนรู้
+            <select id="unitSelect" required></select>
+          </label>
+          <label class="full">หัวข้อ
+            <select id="topicSelect" required></select>
+          </label>
+          <label class="full">ลิงก์ YouTube
+            <input id="youtubeUrl" type="url" placeholder="https://www.youtube.com/watch?v=..." required>
+          </label>
+          <label>เวลาเรียนที่กำหนด (นาที)
+            <input id="durationMinutes" type="number" min="0.1" max="1440" step="0.1" placeholder="10" required>
+          </label>
+          <label>ลำดับบทเรียน
+            <input id="sortOrder" type="number" min="0" max="9999" step="1" value="0" required>
+          </label>
+          <label class="full">รายละเอียด
+            <textarea id="lessonDescription" rows="4" maxlength="1200" placeholder="สิ่งที่ผู้เรียนจะได้จากบทเรียนนี้"></textarea>
+          </label>
+          <label class="full checkbox-field">
+            <input id="isPublished" type="checkbox" checked>
+            <span>เผยแพร่ให้นักเรียนเห็นทันที</span>
+          </label>
+          <div class="form-actions">
+            <button id="cancelEdit" class="soft-btn" type="button" hidden>ยกเลิกแก้ไข</button>
+            <button id="saveLesson" class="primary-btn" type="submit">เพิ่มบทเรียน</button>
+          </div>
+        </form>
+      </article>
+
+      <article class="manage-card">
+        <h2>บทเรียนทั้งหมด</h2>
+        <p id="lessonSummary" class="section-note">กำลังโหลดรายการ...</p>
+        <div id="lessonLoading" class="loading-state"><span></span>กำลังโหลดบทเรียน...</div>
+        <div id="lessonEmpty" class="empty-state" hidden><strong>ยังไม่มีบทเรียน</strong><p>เพิ่มบทเรียนแรกจากแบบฟอร์มด้านซ้ายได้เลย</p></div>
+        <div id="managedLessons" class="managed-lessons"></div>
+      </article>
+    </section>
+  </main>
+
+  <div id="toast" class="toast" role="status"></div>
+  <script src="manageLessons.js?v=20260730-5"></script>
+</body>
+</html>

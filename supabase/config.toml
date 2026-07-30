@@ -1,0 +1,7 @@
+project_id = "klszrjhdpvsiktddzpga"
+
+[functions.admin-users]
+verify_jwt = true
+
+[functions.notify-teacher-submission]
+verify_jwt = true

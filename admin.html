@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard | TrackPro</title>
+  <link rel="stylesheet" href="trackpro-theme.css">
+  <link rel="stylesheet" href="admin.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body class="page-admin">
+  <aside class="admin-sidebar">
+    <a class="admin-brand" href="admin.html">
+      <span class="admin-brand-icon" aria-hidden="true">🛡️</span>
+      <span><strong>TrackPro</strong><small>ผู้ดูแลระบบ</small></span>
+    </a>
+
+    <nav class="admin-nav" aria-label="เมนูผู้ดูแลระบบ">
+      <a class="active" href="admin.html"><span>👥</span> จัดการสมาชิก</a>
+      <a href="allProject.html"><span>📚</span> โครงงานทั้งหมด</a>
+      <a href="manageLessons.html"><span>📖</span> จัดการบทเรียน</a>
+      <a href="community.html"><span>💬</span> กระดานชุมชน</a>
+    </nav>
+
+    <div class="admin-sidebar-note">
+      <span aria-hidden="true">🔒</span>
+      <div><strong>พื้นที่ควบคุม</strong><small>เฉพาะบัญชี Admin เท่านั้น</small></div>
+    </div>
+  </aside>
+
+  <div class="admin-shell">
+    <header class="admin-topbar">
+      <button id="menuToggle" class="menu-toggle" type="button" aria-label="เปิดหรือปิดเมนู">☰</button>
+      <div class="admin-account">
+        <span class="admin-avatar" aria-hidden="true">A</span>
+        <div><strong id="adminName">กำลังโหลด...</strong><small id="adminEmail"></small></div>
+      </div>
+      <button class="admin-logout" type="button" onclick="logout()">ออกจากระบบ</button>
+    </header>
+
+    <main class="admin-main">
+      <section class="admin-hero">
+        <div>
+          <p class="admin-eyebrow">ADMIN CONTROL CENTER</p>
+          <h1>จัดการสมาชิกทั้งหมด</h1>
+        </div>
+        <button class="refresh-btn" type="button" onclick="refreshData()">↻ โหลดข้อมูลใหม่</button>
+      </section>
+
+      <section class="admin-stats" aria-label="สรุปสมาชิกและโครงงาน">
+        <article class="admin-stat"><span class="stat-icon brown">👥</span><div><small>สมาชิกทั้งหมด</small><strong id="memberCount">0</strong></div></article>
+        <article class="admin-stat"><span class="stat-icon green">🎓</span><div><small>นักเรียน</small><strong id="studentCount">0</strong></div></article>
+        <article class="admin-stat"><span class="stat-icon yellow">🧑‍🏫</span><div><small>ครู</small><strong id="teacherCount">0</strong></div></article>
+        <article class="admin-stat"><span class="stat-icon red">📁</span><div><small>โครงงานทั้งหมด</small><strong id="projectCount">0</strong></div></article>
+      </section>
+
+      <section class="admin-panel">
+        <div class="admin-panel-head">
+          <div><h2>รายชื่อสมาชิก</h2><p id="resultSummary">กำลังโหลดข้อมูล...</p></div>
+          <div class="admin-filters">
+            <label class="search-field">
+              <span aria-hidden="true">⌕</span>
+              <input id="searchInput" type="search" placeholder="ค้นหาชื่อหรืออีเมล" autocomplete="off">
+            </label>
+            <select id="roleFilter" aria-label="กรองตามบทบาท">
+              <option value="all">ทุกบทบาท</option>
+              <option value="student">นักเรียน</option>
+              <option value="teacher">ครู</option>
+              <option value="community">ชุมชน</option>
+              <option value="admin">Admin</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="adminLoading" class="admin-loading"><span></span> กำลังโหลดสมาชิก...</div>
+        <div class="table-wrap">
+          <table id="usersTable" class="users-table" hidden>
+            <thead><tr><th>สมาชิก</th><th>บทบาท</th><th>ชั้น / เลขที่</th><th>เข้าใช้ล่าสุด</th><th class="actions-column">จัดการ</th></tr></thead>
+            <tbody id="usersBody"></tbody>
+          </table>
+        </div>
+        <div id="emptyUsers" class="admin-empty" hidden><span>🔎</span><strong>ไม่พบสมาชิก</strong><p>ลองเปลี่ยนคำค้นหาหรือตัวกรอง</p></div>
+      </section>
+    </main>
+  </div>
+
+  <dialog id="projectsDialog" class="projects-dialog" aria-labelledby="projectsDialogTitle">
+    <div class="projects-dialog-shell">
+      <div class="dialog-head projects-dialog-head">
+        <div>
+          <span class="dialog-icon" aria-hidden="true">📊</span>
+          <div>
+            <h2 id="projectsDialogTitle">โครงงานของสมาชิก</h2>
+            <p id="projectsDialogMeta"></p>
+          </div>
+        </div>
+        <button class="close-dialog" type="button" aria-label="ปิด" onclick="closeProjectsDialog()">×</button>
+      </div>
+
+      <div class="project-summary-cards" aria-label="สรุปโครงงานของสมาชิก">
+        <div><small>โครงงานที่เกี่ยวข้อง</small><strong id="userProjectCount">0</strong></div>
+        <div><small>ความคืบหน้าเฉลี่ย</small><strong id="userProgressAverage">0%</strong></div>
+      </div>
+
+      <div id="userProjectsLoading" class="projects-loading"><span></span> กำลังโหลดโครงงาน...</div>
+      <div id="userProjectsList" class="user-projects-list"></div>
+      <div id="userProjectsEmpty" class="projects-empty" hidden>
+        <span aria-hidden="true">📭</span>
+        <strong>ยังไม่มีโครงงาน</strong>
+        <p>ไม่พบโครงงานที่เกี่ยวข้องกับสมาชิกคนนี้</p>
+      </div>
+      <div id="userProjectsError" class="projects-error" hidden></div>
+    </div>
+  </dialog>
+
+  <dialog id="editDialog" class="edit-dialog">
+    <form id="editForm" method="dialog">
+      <div class="dialog-head"><div><span class="dialog-icon">✏️</span><h2>แก้ไขข้อมูลสมาชิก</h2></div><button class="close-dialog" type="button" aria-label="ปิด" onclick="closeEditDialog()">×</button></div>
+      <input id="editUserId" type="hidden">
+      <div class="form-grid">
+        <label>ชื่อจริง<input id="editFirstName" type="text" maxlength="80" required></label>
+        <label>นามสกุล<input id="editLastName" type="text" maxlength="80" required></label>
+        <label class="full-field">อีเมล<input id="editEmail" type="email" required></label>
+        <label>บทบาท<select id="editRole" required><option value="student">นักเรียน</option><option value="teacher">ครู</option><option value="community">ชุมชน</option><option value="admin">Admin</option></select></label>
+        <label>ชั้น<input id="editGrade" type="text" maxlength="20" placeholder="เช่น 4/1"></label>
+        <label>เลขที่<input id="editNo" type="number" min="1" max="999"></label>
+      </div>
+      <div class="dialog-actions"><button type="button" class="cancel-btn" onclick="closeEditDialog()">ยกเลิก</button><button id="saveUserBtn" type="submit" class="save-btn">บันทึกข้อมูล</button></div>
+    </form>
+  </dialog>
+
+  <script src="admin.js"></script>
+</body>
+</html>

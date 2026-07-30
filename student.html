@@ -3,13 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="refresh" content="0; url=dashboard.html">
   <title>โครงงานนักเรียน - ข้อมูลส่วนตัว</title>
   
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
   <style>
-    body { margin: 0; font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; background: #f6efe6; color: #3b3b3b; }
+    body { margin: 0; font-family: 'Noto Sans Thai', sans-serif; background: #f6efe6; color: #3b3b3b; }
     header { background: #e9dfcf; padding: 18px 32px; display: flex; justify-content: space-between; align-items: center; }
     header h1 { margin: 0; font-size: 22px; }
     .nav-buttons button { margin-left: 8px; background: #7fa37c; color: white; border: none; padding: 10px 14px; border-radius: 10px; cursor: pointer; transition: background 0.3s; }
@@ -38,13 +39,16 @@
     .delete-btn { flex: 1; padding: 10px; background: #c94b3f; color: white; border: none; border-radius: 10px; cursor: pointer; font-weight: 600; transition: 0.2s; }
     .delete-btn:hover { background: #a83d33; }
   </style>
+  <link rel="stylesheet" href="trackpro-theme.css">
 </head>
-<body>
+<body class="page-legacy-student">
 
 <header>
   <h1>📘 Student</h1>
   <div class="nav-buttons">
+    <button onclick="location.href='dashboard.html'">📊 Dashboard</button>
     <button onclick="location.href='addProject.html'">➕ เพิ่มโครงงาน</button>
+    <button onclick="location.href='learning.html'">🎓 การเรียนรู้</button>
     <button onclick="location.href='allProject.html'">📚 โครงงานทั้งหมด</button>
     <button onclick="location.href='community.html'">📌 กระดานชุมชน</button>
     <button onclick="location.href='index.html'">🏠 หน้าหลัก</button>
